@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:skripsi_iot_projector/model/schedule_model.dart';
 import 'package:skripsi_iot_projector/page/bloc/schedule_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
 
 class Schedule extends StatefulWidget {
   const Schedule({super.key});
@@ -15,9 +17,26 @@ class Schedule extends StatefulWidget {
 }
 
 class _ScheduleState extends State<Schedule> {
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+
   void initState() {
     super.initState();
+    _selectedDay = _focusedDay;
     context.read<ScheduleBloc>().add(LoadScheduleEvent());
+  }
+
+  String _getHariName(int weekday) {
+    const days = {
+      1: 'Senin',
+      2: 'Selasa',
+      3: 'Rabu',
+      4: 'Kamis',
+      5: 'Jumat',
+      6: 'Sabtu',
+    };
+    return days[weekday] ?? '';
   }
 
   @override
@@ -34,8 +53,39 @@ class _ScheduleState extends State<Schedule> {
               ? state.file
               : (state as UploadScheduleLoading).file;
           return _previewFileWidget(context, file);
-        } else if (state is ScheduleLoaded) {
-          return _scheduleCalendar(context);
+        } else if (state is ScheduleLoaded ||
+            state is SelectCalendarDateLoaded ||
+            state is SelectCalendarDateLoading) {
+          final List<ScheduleModel> wholeSchedule = (state is ScheduleLoaded)
+              ? state.wholeSchedule
+              : (state is SelectCalendarDateLoaded)
+              ? state.wholeSchedule
+              : (state as SelectCalendarDateLoading).wholeSchedule;
+          final List<ScheduleModel> selectedDaySchedule =
+              (state is ScheduleLoaded)
+              ? state.selectedDaySchedule
+              : (state is SelectCalendarDateLoaded)
+              ? state.selectedDaySchedule
+              : [];
+
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _scheduleCalendar(
+                context,
+                wholeSchedule: wholeSchedule,
+                selectedDaySchedule: selectedDaySchedule,
+              ),
+              SizedBox(width: 24),
+              Expanded(
+                child: _scheduleListView(
+                  context,
+                  scheduleForSelectedDay: selectedDaySchedule,
+                ),
+              ),
+            ],
+          );
         } else if (state is ScheduleFailure) {
           return Center(
             child: Text(
@@ -245,91 +295,294 @@ class _ScheduleState extends State<Schedule> {
     );
   }
 
-  Widget _scheduleCalendar(BuildContext context) {
+  Widget _scheduleListView(
+    BuildContext context, {
+    required List<ScheduleModel> scheduleForSelectedDay,
+  }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    CalendarFormat _calendarFormat = CalendarFormat.month;
-    DateTime _focusedDay = DateTime.now();
-    DateTime? _selectedDay;
 
-    return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 800),
-        margin: const EdgeInsets.all(20),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: theme.canvasColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.canvasColor,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
             ),
-          ],
+            boxShadow: isDark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 5,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Text(
+            DateFormat('d MMMM yyyy').format(_selectedDay!),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          ),
         ),
-        child: TableCalendar(
-          firstDay: DateTime.utc(2020, 1, 1),
-          lastDay: DateTime.utc(2030, 12, 31),
-          focusedDay: _focusedDay,
-          calendarFormat: _calendarFormat,
-          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-          onDaySelected: (selectedDay, focusedDay) {
-            setState(() {
-              _selectedDay = selectedDay;
-              _focusedDay = focusedDay;
-            });
+        BlocBuilder<ScheduleBloc, ScheduleState>(
+          builder: (context, state) {
+            if (state is SelectCalendarDateLoading) {
+              return Expanded(
+                child: const Center(child: CircularProgressIndicator()),
+              );
+            } else {
+              return Expanded(
+                child: Container(
+                  margin: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.canvasColor,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white10
+                          : Colors.black.withOpacity(0.05),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: scheduleForSelectedDay.isEmpty
+                      ? const Center(
+                          child: Text("Tidak ada jadwal untuk hari ini"),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: scheduleForSelectedDay.length,
+                          itemBuilder: (context, index) {
+                            final schedule = scheduleForSelectedDay[index];
+                            return Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        schedule.mata_kuliah,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 19,
+                                        ),
+                                      ),
+                                      SizedBox(height: 12),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            FontAwesomeIcons.clock,
+                                            size: 16,
+                                            color: Colors.grey,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            '${schedule.start_time} - ${schedule.end_time} GMT+7',
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            FontAwesomeIcons.locationDot,
+                                            size: 16,
+                                            color: Colors.grey[400],
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            schedule.classroom,
+                                            style: TextStyle(
+                                              color: Colors.grey[400],
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Divider(
+                                  color: Theme.of(context).dividerColor,
+                                  thickness: 1,
+                                  height: 15,
+                                  indent: 15,
+                                  endIndent: 15,
+                                ),
+                              ],
+                            );
+                            // ListTile(
+                            //   title: Text(
+                            //     schedule.mata_kuliah,
+                            //     style: const TextStyle(fontWeight: FontWeight.bold),
+                            //   ),
+                            //   subtitle: Text(
+                            //     '${schedule.classroom} | ${schedule.start_time} - ${schedule.end_time}',
+                            //   ),
+                            // );
+                          },
+                        ),
+                ),
+              );
+            }
           },
-          onFormatChanged: (format) {
-            setState(() {
-              _calendarFormat = format;
-            });
+        ),
+      ],
+    );
+  }
+
+  Widget _scheduleCalendar(
+    BuildContext context, {
+    required List<ScheduleModel> wholeSchedule,
+    required List<ScheduleModel> selectedDaySchedule,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      width: 300,
+      height: 380,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.canvasColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: TableCalendar(
+        rowHeight: 45,
+        sixWeekMonthsEnforced: false,
+        firstDay: DateTime.utc(2020, 1, 1),
+        lastDay: DateTime.utc(2030, 12, 31),
+        focusedDay: _focusedDay,
+        calendarFormat: _calendarFormat,
+        eventLoader: (day) {
+          String currentHari = _getHariName(day.weekday);
+          return wholeSchedule.where((s) => s.hari == currentHari).toList();
+        },
+        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+        onDaySelected: (selectedDay, focusedDay) {
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+          });
+
+          context.read<ScheduleBloc>().add(
+            CalendarDateSelectedEvent(
+              selectedDay: _getHariName(selectedDay.weekday),
+              scheduleForSelectedDay: wholeSchedule
+                  .where((s) => s.hari == _getHariName(selectedDay.weekday))
+                  .toList(),
+              wholeSchedule: wholeSchedule,
+            ),
+          );
+        },
+        onFormatChanged: (format) {
+          setState(() {
+            _calendarFormat = format;
+          });
+        },
+        headerStyle: HeaderStyle(
+          formatButtonVisible: false,
+          titleCentered: true,
+          titleTextStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+          leftChevronIcon: Icon(Icons.chevron_left, color: theme.primaryColor),
+          rightChevronIcon: Icon(
+            Icons.chevron_right,
+            color: theme.primaryColor,
+          ),
+        ),
+        calendarStyle: CalendarStyle(
+          markersMaxCount: 1,
+          markerDecoration: BoxDecoration(
+            color: theme.primaryColor,
+            shape: BoxShape.circle,
+          ),
+          defaultTextStyle: TextStyle(fontSize: 12),
+          todayDecoration: BoxDecoration(
+            color: theme.primaryColor.withOpacity(0.2),
+            shape: BoxShape.circle,
+          ),
+          todayTextStyle: TextStyle(
+            fontSize: 12,
+            color: theme.primaryColor,
+            fontWeight: FontWeight.bold,
+          ),
+          selectedTextStyle: TextStyle(
+            color: theme.brightness == Brightness.dark
+                ? Colors.black
+                : Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+          selectedDecoration: BoxDecoration(
+            color: theme.primaryColor,
+            shape: BoxShape.circle,
+          ),
+          weekendTextStyle: const TextStyle(
+            color: Colors.redAccent,
+            fontSize: 12,
+          ),
+          outsideDaysVisible: false,
+        ),
+        daysOfWeekStyle: DaysOfWeekStyle(
+          weekdayStyle: TextStyle(
+            color: isDark ? Colors.white70 : Colors.black54,
+            fontWeight: FontWeight.bold,
+          ),
+          weekendStyle: const TextStyle(
+            color: Colors.redAccent,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        calendarBuilders: CalendarBuilders(
+          markerBuilder: (context, day, events) {
+            if (events.isNotEmpty) {
+              return Positioned(
+                bottom: 1,
+                child: Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: theme.primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              );
+            }
+            return null;
           },
-          headerStyle: HeaderStyle(
-            formatButtonVisible: false,
-            titleCentered: true,
-            titleTextStyle: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-            leftChevronIcon: Icon(
-              Icons.chevron_left,
-              color: theme.primaryColor,
-            ),
-            rightChevronIcon: Icon(
-              Icons.chevron_right,
-              color: theme.primaryColor,
-            ),
-          ),
-          calendarStyle: CalendarStyle(
-            todayDecoration: BoxDecoration(
-              color: theme.primaryColor.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            todayTextStyle: TextStyle(
-              color: theme.primaryColor,
-              fontWeight: FontWeight.bold,
-            ),
-            selectedDecoration: BoxDecoration(
-              color: theme.primaryColor,
-              shape: BoxShape.circle,
-            ),
-            weekendTextStyle: const TextStyle(color: Colors.redAccent),
-            outsideDaysVisible: false,
-          ),
-          daysOfWeekStyle: DaysOfWeekStyle(
-            weekdayStyle: TextStyle(
-              color: isDark ? Colors.white70 : Colors.black54,
-              fontWeight: FontWeight.bold,
-            ),
-            weekendStyle: const TextStyle(
-              color: Colors.redAccent,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
         ),
       ),
     );

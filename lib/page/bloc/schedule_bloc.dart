@@ -69,6 +69,15 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     });
 
     on<LoadScheduleEvent>((event, emit) async {
+      const days = {
+        1: 'Senin',
+        2: 'Selasa',
+        3: 'Rabu',
+        4: 'Kamis',
+        5: 'Jumat',
+        6: 'Sabtu',
+      };
+
       emit(ScheduleLoading());
       print("Loading schedule data from database...");
       try {
@@ -77,15 +86,32 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
         if (result == null || (result is List && result.isEmpty)) {
           emit(ScheduleInitial());
         } else {
-          List<ScheduleModel> schedules = (result as List)
+          List<ScheduleModel> wholeSchedule = (result as List)
               .map((json) => ScheduleModel.fromJson(json))
               .toList();
-          emit(ScheduleLoaded(schedules));
+
+          List<ScheduleModel> getTodaySchedule = wholeSchedule
+              .where((s) => s.hari == days[DateTime.now().weekday])
+              .toList();
+
+          emit(ScheduleLoaded(wholeSchedule, getTodaySchedule));
         }
       } catch (e) {
         print("Error loading schedule: $e");
         emit(ScheduleFailure('Gagal memuat jadwal: $e'));
       }
+    });
+
+    on<CalendarDateSelectedEvent>((event, emit) async {
+      emit(SelectCalendarDateLoading(event.wholeSchedule));
+
+      await Future.delayed(const Duration(milliseconds: 100));
+      emit(
+        SelectCalendarDateLoaded(
+          event.wholeSchedule,
+          event.scheduleForSelectedDay,
+        ),
+      );
     });
   }
 }

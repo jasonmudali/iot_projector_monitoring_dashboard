@@ -20,3 +20,14 @@ final class ResetFileSelectionEvent extends ScheduleEvent {}
 
 // Fetch schedule data from database
 final class LoadScheduleEvent extends ScheduleEvent {}
+
+final class CalendarDateSelectedEvent extends ScheduleEvent {
+  final String selectedDay;
+  final List<ScheduleModel> scheduleForSelectedDay;
+  final List<ScheduleModel> wholeSchedule;
+  CalendarDateSelectedEvent({
+    required this.selectedDay,
+    required this.scheduleForSelectedDay,
+    required this.wholeSchedule,
+  });
+}

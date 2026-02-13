@@ -28,7 +28,11 @@ class ThemeConfig {
     canvasColor: const Color(0xFFF8FAFC),
     primaryColor: Colors.black,
     dividerColor: Colors.black12,
+    progressIndicatorTheme: const ProgressIndicatorThemeData(
+      color: Colors.black,
+    ),
   );
+
   static final darkTheme = ThemeData(
     brightness: Brightness.dark,
     primarySwatch: Colors.amber,
@@ -56,5 +60,8 @@ class ThemeConfig {
     canvasColor: const Color(0xFF020617),
     primaryColor: Colors.white,
     dividerColor: Colors.white10,
+    progressIndicatorTheme: const ProgressIndicatorThemeData(
+      color: Color(0xFF60A5FA),
+    ),
   );
 }

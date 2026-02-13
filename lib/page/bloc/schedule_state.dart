@@ -17,9 +17,10 @@ final class UploadScheduleLoading extends ScheduleState {
 
 // displaying schedule to calendar
 final class ScheduleLoaded extends ScheduleState {
-  List<ScheduleModel> schedules;
+  List<ScheduleModel> wholeSchedule;
+  final List<ScheduleModel> selectedDaySchedule;
 
-  ScheduleLoaded(this.schedules);
+  ScheduleLoaded(this.wholeSchedule, this.selectedDaySchedule);
 }
 
 // get schedule data from database
@@ -30,4 +31,15 @@ final class ScheduleLoadedEmpty extends ScheduleState {}
 final class ScheduleFailure extends ScheduleState {
   final String error;
   ScheduleFailure(this.error);
+}
+
+final class SelectCalendarDateLoading extends ScheduleState {
+  final List<ScheduleModel> wholeSchedule;
+  SelectCalendarDateLoading(this.wholeSchedule);
+}
+
+final class SelectCalendarDateLoaded extends ScheduleState {
+  final List<ScheduleModel> wholeSchedule;
+  final List<ScheduleModel> selectedDaySchedule;
+  SelectCalendarDateLoaded(this.wholeSchedule, this.selectedDaySchedule);
 }
