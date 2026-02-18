@@ -15,15 +15,20 @@ final class UploadScheduleLoading extends ScheduleState {
   UploadScheduleLoading(this.file);
 }
 
-// displaying schedule to calendar
+// Displaying schedule to calendar
 final class ScheduleLoaded extends ScheduleState {
   List<ScheduleModel> wholeSchedule;
   final List<ScheduleModel> selectedDaySchedule;
+  final Map<String, List<ScheduleModel>> groupedTodaySchedule;
 
-  ScheduleLoaded(this.wholeSchedule, this.selectedDaySchedule);
+  ScheduleLoaded(
+    this.wholeSchedule,
+    this.selectedDaySchedule,
+    this.groupedTodaySchedule,
+  );
 }
 
-// get schedule data from database
+// Get schedule data from database
 final class ScheduleLoading extends ScheduleState {}
 
 final class ScheduleLoadedEmpty extends ScheduleState {}
@@ -33,13 +38,21 @@ final class ScheduleFailure extends ScheduleState {
   ScheduleFailure(this.error);
 }
 
+// Loading when selecting date on calendar
 final class SelectCalendarDateLoading extends ScheduleState {
   final List<ScheduleModel> wholeSchedule;
   SelectCalendarDateLoading(this.wholeSchedule);
 }
 
+// Loaded schedule data after selecting date on calendar
 final class SelectCalendarDateLoaded extends ScheduleState {
   final List<ScheduleModel> wholeSchedule;
   final List<ScheduleModel> selectedDaySchedule;
-  SelectCalendarDateLoaded(this.wholeSchedule, this.selectedDaySchedule);
+  final Map<String, List<ScheduleModel>> groupedTodaySchedule;
+
+  SelectCalendarDateLoaded(
+    this.wholeSchedule,
+    this.selectedDaySchedule,
+    this.groupedTodaySchedule,
+  );
 }

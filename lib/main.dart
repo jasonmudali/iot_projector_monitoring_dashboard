@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skripsi_iot_projector/page/bloc/mqtt/mqtt_bloc.dart';
-import 'package:skripsi_iot_projector/page/bloc/schedule_bloc.dart';
+import 'package:skripsi_iot_projector/page/bloc/schedule/schedule_bloc.dart';
 import 'package:skripsi_iot_projector/page/bloc/theme/theme_bloc.dart';
 import 'package:skripsi_iot_projector/page/dasbhoard.dart';
 import 'package:skripsi_iot_projector/page/home.dart';

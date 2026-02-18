@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:meta/meta.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:excel/excel.dart';
-import 'package:skripsi_iot_projector/page/schedule.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:skripsi_iot_projector/model/schedule_model.dart';
 
@@ -79,10 +78,10 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
       };
 
       emit(ScheduleLoading());
-      print("Loading schedule data from database...");
+
       try {
         final result = await supabase.from('tbl_jadwalkelas').select();
-        print("Loaded schedule data: $result");
+
         if (result == null || (result is List && result.isEmpty)) {
           emit(ScheduleInitial());
         } else {
@@ -94,7 +93,22 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
               .where((s) => s.hari == days[DateTime.now().weekday])
               .toList();
 
-          emit(ScheduleLoaded(wholeSchedule, getTodaySchedule));
+          Map<String, List<ScheduleModel>> groupedToday = {};
+          for (var s in getTodaySchedule) {
+            if (!groupedToday.containsKey(s.startTime)) {
+              groupedToday[s.startTime] = [];
+            }
+            groupedToday[s.startTime]!.add(s);
+          }
+
+          var sortedKeys = groupedToday.keys.toList()..sort();
+          Map<String, List<ScheduleModel>> sortedGroupedToday = {
+            for (var key in sortedKeys) key: groupedToday[key]!,
+          };
+
+          emit(
+            ScheduleLoaded(wholeSchedule, getTodaySchedule, sortedGroupedToday),
+          );
         }
       } catch (e) {
         print("Error loading schedule: $e");
@@ -106,10 +120,25 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
       emit(SelectCalendarDateLoading(event.wholeSchedule));
 
       await Future.delayed(const Duration(milliseconds: 100));
+
+      Map<String, List<ScheduleModel>> groupedToday = {};
+      for (var s in event.scheduleForSelectedDay) {
+        if (!groupedToday.containsKey(s.startTime)) {
+          groupedToday[s.startTime] = [];
+        }
+        groupedToday[s.startTime]!.add(s);
+      }
+
+      var sortedKeys = groupedToday.keys.toList()..sort();
+      Map<String, List<ScheduleModel>> sortedGroupedToday = {
+        for (var key in sortedKeys) key: groupedToday[key]!,
+      };
+
       emit(
         SelectCalendarDateLoaded(
           event.wholeSchedule,
           event.scheduleForSelectedDay,
+          sortedGroupedToday,
         ),
       );
     });

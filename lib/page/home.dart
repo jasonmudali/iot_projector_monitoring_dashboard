@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:skripsi_iot_projector/page/bloc/schedule_bloc.dart';
+import 'package:skripsi_iot_projector/page/bloc/schedule/schedule_bloc.dart';
 import 'package:skripsi_iot_projector/page/bloc/theme/theme_bloc.dart';
 import 'package:skripsi_iot_projector/page/dasbhoard.dart';
 
@@ -35,14 +35,14 @@ class HomePage extends StatelessWidget {
                       color: Theme.of(context).primaryColor,
                     ),
                     onDestinationSelected: (int index) {
+                      if (index == 1 && navigationShell.currentIndex != index) {
+                        context.read<ScheduleBloc>().add(LoadScheduleEvent());
+                      }
+
                       navigationShell.goBranch(
                         index,
                         initialLocation: index == navigationShell.currentIndex,
                       );
-
-                      if (index == 1) {
-                        context.read<ScheduleBloc>().add(LoadScheduleEvent());
-                      }
                     },
                     selectedIndex: navigationShell.currentIndex,
                     destinations: [
