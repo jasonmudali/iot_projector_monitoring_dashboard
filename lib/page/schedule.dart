@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skripsi_iot_projector/model/schedule_model.dart';
+import 'package:skripsi_iot_projector/model/update_schedule_model.dart';
 import 'package:skripsi_iot_projector/page/bloc/schedule/schedule_bloc.dart';
+import 'package:skripsi_iot_projector/widgets/schedule_list_view.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
+import 'package:skripsi_iot_projector/page/detail_dashboard.dart';
 
 class Schedule extends StatefulWidget {
   const Schedule({super.key});
@@ -85,10 +89,10 @@ class _ScheduleState extends State<Schedule> {
               ),
               SizedBox(width: 24),
               Expanded(
-                child: _scheduleListView(
-                  context,
+                child: ScheduleListView(
                   scheduleForSelectedDay: selectedDaySchedule,
                   groupedSchedules: groupedTodaySchedule,
+                  selectedDay: _selectedDay,
                 ),
               ),
             ],
@@ -184,7 +188,7 @@ class _ScheduleState extends State<Schedule> {
         width: 500,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
+          color: Theme.of(context).canvasColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.green.withOpacity(0.5), width: 2),
           boxShadow: [
@@ -302,210 +306,6 @@ class _ScheduleState extends State<Schedule> {
     );
   }
 
-  Widget _scheduleListView(
-    BuildContext context, {
-    required List<ScheduleModel> scheduleForSelectedDay,
-    required Map<String, List<ScheduleModel>> groupedSchedules,
-  }) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 10),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.canvasColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
-            ),
-            boxShadow: isDark
-                ? []
-                : [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 5,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-          ),
-          child: Text(
-            DateFormat('d MMMM yyyy').format(_selectedDay!),
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          ),
-        ),
-        Expanded(
-          child: Container(
-            margin: const EdgeInsets.all(10),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.canvasColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: BlocBuilder<ScheduleBloc, ScheduleState>(
-              builder: (context, state) {
-                if (state is SelectCalendarDateLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                } else {
-                  return scheduleForSelectedDay.isEmpty
-                      ? const Center(
-                          child: Text("Tidak ada jadwal untuk hari ini"),
-                        )
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: groupedSchedules.keys.length,
-                          itemBuilder: (context, index) {
-                            String timeKey = groupedSchedules.keys.elementAt(
-                              index,
-                            );
-
-                            List<ScheduleModel> classesAtThisTime =
-                                groupedSchedules[timeKey]!;
-
-                            return IntrinsicHeight(
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    width: 100,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 20,
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          timeKey,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
-                                            color: Theme.of(
-                                              context,
-                                            ).primaryColor,
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 2,
-                                          height: 20,
-                                          color: Colors.grey.withOpacity(0.3),
-                                        ),
-                                        Text(
-                                          classesAtThisTime.first.endTime,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        ...classesAtThisTime.map((schedule) {
-                                          return Column(
-                                            children: [
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 16,
-                                                      vertical: 12,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  border: Border(
-                                                    left: BorderSide(
-                                                      color: Theme.of(context)
-                                                          .primaryColor
-                                                          .withOpacity(0.5),
-                                                      width: 3,
-                                                    ),
-                                                  ),
-                                                ),
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      schedule.mataKuliah,
-                                                      style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 19,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 12),
-                                                    Row(
-                                                      children: [
-                                                        const Icon(
-                                                          FontAwesomeIcons
-                                                              .locationDot,
-                                                          size: 14,
-                                                          color: Colors.grey,
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 8,
-                                                        ),
-                                                        Text(
-                                                          schedule.classroom,
-                                                          style: TextStyle(
-                                                            color: Colors
-                                                                .grey[400],
-                                                            fontSize: 15,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          );
-                                        }).toList(),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 8.0,
-                                            bottom: 8.0,
-                                          ),
-                                          child: Divider(
-                                            color: Theme.of(
-                                              context,
-                                            ).dividerColor.withOpacity(0.1),
-                                            indent: 16,
-                                            endIndent: 16,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                }
-              },
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _scheduleCalendar(
     BuildContext context, {
     required List<ScheduleModel> wholeSchedule,
@@ -540,8 +340,13 @@ class _ScheduleState extends State<Schedule> {
         focusedDay: _focusedDay,
         calendarFormat: _calendarFormat,
         eventLoader: (day) {
-          String currentHari = _getHariName(day.weekday);
-          return wholeSchedule.where((s) => s.hari == currentHari).toList();
+          return wholeSchedule
+              .where(
+                (s) =>
+                    DateFormat('yyyy-MM-dd').format(s.tanggal) ==
+                    DateFormat('yyyy-MM-dd').format(day.toLocal()),
+              )
+              .toList();
         },
         selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
         onDaySelected: (selectedDay, focusedDay) {
@@ -552,9 +357,13 @@ class _ScheduleState extends State<Schedule> {
 
           context.read<ScheduleBloc>().add(
             CalendarDateSelectedEvent(
-              selectedDay: _getHariName(selectedDay.weekday),
+              selectedDate: selectedDay,
               scheduleForSelectedDay: wholeSchedule
-                  .where((s) => s.hari == _getHariName(selectedDay.weekday))
+                  .where(
+                    (s) =>
+                        DateFormat('yyyy-MM-dd').format(s.tanggal) ==
+                        DateFormat('yyyy-MM-dd').format(selectedDay),
+                  )
                   .toList(),
               wholeSchedule: wholeSchedule,
             ),

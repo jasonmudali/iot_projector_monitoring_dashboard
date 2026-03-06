@@ -14,8 +14,6 @@ class ProjectorModel {
   });
 
   factory ProjectorModel.fromJson(Map<String, dynamic> json) {
-    // final data = json['data'] as Map<String, dynamic>? ?? {};
-
     return ProjectorModel(
       id: json['device_id'] ?? "HD3",
       status: json['status'] ?? "OFF",

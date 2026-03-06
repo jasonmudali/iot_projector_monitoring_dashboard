@@ -3,8 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:meta/meta.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:excel/excel.dart';
+import 'package:skripsi_iot_projector/model/update_schedule_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:skripsi_iot_projector/model/schedule_model.dart';
+import 'package:intl/intl.dart';
 
 part 'schedule_event.dart';
 part 'schedule_state.dart';
@@ -19,15 +21,29 @@ List<Map<String, dynamic>> _parseExcelLogic(List<int> bytes) {
   if (table != null) {
     for (int i = 1; i < table.maxRows; i++) {
       final row = table.rows[i];
+
+      final String classroom = row[0]?.value.toString() ?? "";
       final String matkul = row[1]?.value.toString() ?? "";
+      final String hari = row[2]?.value.toString() ?? "";
+      var tanggal = row[3]?.value ?? "";
+      final String startTime = row[4]?.value.toString() ?? "";
+      final String endTime = row[5]?.value.toString() ?? "";
+
+      String formattedDate = "";
+
+      if (tanggal.toString().contains('T')) {
+        DateTime parsedDate = DateTime.parse(tanggal.toString());
+        formattedDate = parsedDate.toIso8601String();
+      }
 
       if (matkul.isNotEmpty) {
         schedules.add({
-          'classroom': row[0]?.value.toString() ?? "",
+          'classroom': classroom,
           'mata_kuliah': matkul,
-          'hari': row[2]?.value.toString() ?? "",
-          'start_time': row[3]?.value.toString() ?? "",
-          'end_time': row[4]?.value.toString() ?? "",
+          'hari': hari,
+          'tanggal': formattedDate,
+          'start_time': startTime,
+          'end_time': endTime,
         });
       }
     }
@@ -57,9 +73,18 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
         final bytes = event.file.bytes;
         final schedules = await compute(_parseExcelLogic, bytes!);
 
-        await supabase.from('tbl_jadwalkelas').insert(schedules);
+        final result = await supabase
+            .from('tbl_jadwalkelas')
+            .insert(schedules)
+            .select();
 
-        print("Uploaded file: ${event.file.name}");
+        if (result.isNotEmpty) {
+          print("Schedule data inserted successfully: $result");
+        } else {
+          print("No data was inserted.");
+        }
+
+        // print("Uploaded file: ${event.file.name}");
 
         add(LoadScheduleEvent());
       } catch (e) {
@@ -68,15 +93,6 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     });
 
     on<LoadScheduleEvent>((event, emit) async {
-      const days = {
-        1: 'Senin',
-        2: 'Selasa',
-        3: 'Rabu',
-        4: 'Kamis',
-        5: 'Jumat',
-        6: 'Sabtu',
-      };
-
       emit(ScheduleLoading());
 
       try {
@@ -90,7 +106,11 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
               .toList();
 
           List<ScheduleModel> getTodaySchedule = wholeSchedule
-              .where((s) => s.hari == days[DateTime.now().weekday])
+              .where(
+                (s) =>
+                    DateFormat('yyyy-MM-dd').format(s.tanggal) ==
+                    DateFormat('yyyy-MM-dd').format(DateTime.now()),
+              )
               .toList();
 
           Map<String, List<ScheduleModel>> groupedToday = {};
@@ -141,6 +161,30 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
           sortedGroupedToday,
         ),
       );
+    });
+
+    on<UpdateScheduleEvent>((event, emit) async {
+      try {
+        final result = await supabase
+            .from('tbl_jadwalkelas')
+            .update({
+              // 'hari': DateFormat('EEEE', 'id_ID').format(event.updatedScheduleDate),
+              // 'tanggal': DateFormat('yyyy-MM-dd').format(event.updatedScheduleDate),
+              'start_time': event.newStartTime,
+              'end_time': event.newEndTime,
+            })
+            .eq('id', event.schedule.id)
+            .select();
+        if (result.isNotEmpty) {
+          print("Schedule updated successfully: $result");
+          add(LoadScheduleEvent());
+        } else {
+          print("No schedule was updated.");
+        }
+      } catch (e) {
+        print("Error updating schedule: $e");
+        emit(ScheduleFailure('Gagal memperbarui jadwal: $e'));
+      }
     });
   }
 }

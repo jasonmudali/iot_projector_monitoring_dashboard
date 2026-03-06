@@ -22,12 +22,26 @@ final class ResetFileSelectionEvent extends ScheduleEvent {}
 final class LoadScheduleEvent extends ScheduleEvent {}
 
 final class CalendarDateSelectedEvent extends ScheduleEvent {
-  final String selectedDay;
+  final DateTime selectedDate;
   final List<ScheduleModel> scheduleForSelectedDay;
   final List<ScheduleModel> wholeSchedule;
   CalendarDateSelectedEvent({
-    required this.selectedDay,
+    required this.selectedDate,
     required this.scheduleForSelectedDay,
     required this.wholeSchedule,
+  });
+}
+
+final class UpdateScheduleEvent extends ScheduleEvent {
+  final ScheduleModel schedule;
+  final DateTime updatedScheduleDate;
+  final String newStartTime;
+  final String newEndTime;
+
+  UpdateScheduleEvent({
+    required this.schedule,
+    required this.updatedScheduleDate,
+    required this.newStartTime,
+    required this.newEndTime,
   });
 }

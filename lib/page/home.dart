@@ -12,9 +12,31 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isDesktop = screenWidth >= 600;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Row(
+      appBar: !isDesktop 
+      ? AppBar(
+        backgroundColor: Theme.of(context).canvasColor,
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: IconButton(
+                onPressed: () => context.read<ThemeBloc>().add(ToggleThemeEvent()),
+                icon: const Icon(Icons.brightness_4),
+              ),
+            ),
+          ],
+        ) 
+      : null,
+      drawer: !isDesktop
+        ? Drawer(
+            child: Container(),
+          )
+        : null,
+      body: isDesktop ? Row(
         children: [
           Container(
             color: Theme.of(context).canvasColor,
@@ -79,7 +101,10 @@ class HomePage extends StatelessWidget {
             ),
           ),
         ],
-      ),
+      ) : Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: navigationShell,
+      )
     );
   }
 }

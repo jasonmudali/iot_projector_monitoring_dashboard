@@ -1,12 +1,16 @@
 class ScheduleModel {
+  int id;
   String hari;
+  DateTime tanggal;
   String classroom;
   String mataKuliah;
   String startTime;
   String endTime;
 
   ScheduleModel({
+    required this.id,
     required this.hari,
+    required this.tanggal,
     required this.classroom,
     required this.mataKuliah,
     required this.startTime,
@@ -21,11 +25,34 @@ class ScheduleModel {
     }
 
     return ScheduleModel(
+      id: json['id'] ?? 0,
       hari: json['hari'] ?? '',
+      tanggal: json['tanggal'] != null
+          ? DateTime.parse(json['tanggal'])
+          : DateTime.now(),
       classroom: json['classroom'] ?? '',
       mataKuliah: json['mata_kuliah'] ?? '',
       startTime: formatTime(json['start_time']),
       endTime: formatTime(json['end_time']),
     );
   }
+
+  // ScheduleModel copyWith({
+  //   int? id,
+  //   String? mataKuliah,
+  //   String? classroom,
+  //   String? startTime,
+  //   String? endTime,
+  //   String? hari,
+  //   DateTime? tanggal,
+  // }) {
+  //   return ScheduleModel(
+  //     id: id ?? this.id,
+  //     mataKuliah: mataKuliah ?? this.mataKuliah,
+  //     classroom: classroom ?? this.classroom,
+  //     startTime: startTime ?? this.startTime,
+  //     endTime: endTime ?? this.endTime,
+  //     hari: hari ?? this.hari,
+  //   );
+  // }
 }

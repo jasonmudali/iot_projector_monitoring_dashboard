@@ -11,6 +11,7 @@ import 'package:skripsi_iot_projector/theme_config.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:skripsi_iot_projector/page/detail_dashboard.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -29,6 +30,14 @@ final _router = GoRouter(
             GoRoute(
               path: '/dashboard',
               builder: (context, state) => const Dashboard(),
+              routes: [],
+            ),
+            GoRoute(
+              path: '/dashboard/detail/:roomName',
+              builder: (context, state) {
+                final roomName = state.pathParameters['roomName']!;
+                return DetailDashboard(roomName: roomName);
+              },
             ),
           ],
         ),
