@@ -4,6 +4,7 @@ import 'package:meta/meta.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:excel/excel.dart';
 import 'package:skripsi_iot_projector/model/update_schedule_model.dart';
+import 'package:skripsi_iot_projector/repository/mqtt_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:skripsi_iot_projector/model/schedule_model.dart';
 import 'package:intl/intl.dart';
@@ -53,8 +54,9 @@ List<Map<String, dynamic>> _parseExcelLogic(List<int> bytes) {
 
 class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
   final supabase = Supabase.instance.client;
+  final MqttRepository mqttRepository;
 
-  ScheduleBloc() : super(ScheduleInitial()) {
+  ScheduleBloc(this.mqttRepository) : super(ScheduleInitial()) {
     on<PickScheduleFileEvent>((event, emit) {
       emit(ScheduleFileSelected(event.file));
     });
@@ -84,8 +86,6 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
           print("No data was inserted.");
         }
 
-        // print("Uploaded file: ${event.file.name}");
-
         add(LoadScheduleEvent());
       } catch (e) {
         emit(ScheduleFailure('Gagal mengunggah jadwal: $e'));
@@ -94,7 +94,6 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
 
     on<LoadScheduleEvent>((event, emit) async {
       emit(ScheduleLoading());
-
       try {
         final result = await supabase.from('tbl_jadwalkelas').select();
 
@@ -164,6 +163,7 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     });
 
     on<UpdateScheduleEvent>((event, emit) async {
+      emit(ScheduleLoading());
       try {
         final result = await supabase
             .from('tbl_jadwalkelas')
@@ -181,10 +181,27 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
         } else {
           print("No schedule was updated.");
         }
+        add(RefetchScheduleMqttEvent());
       } catch (e) {
         print("Error updating schedule: $e");
         emit(ScheduleFailure('Gagal memperbarui jadwal: $e'));
       }
+    });
+
+    on<ReplaceScheduleEvent>((event, emit) async {
+      emit(ScheduleLoading());
+      try {
+        await supabase.rpc('reset_jadwalkelas');
+        print("All schedules deleted and ID counter reset successfully.");
+        add(LoadScheduleEvent());
+      } catch (e) {
+        print("Error resetting schedules: $e");
+        emit(ScheduleFailure('Gagal menghapus jadwal: $e'));
+      }
+    });
+
+    on<RefetchScheduleMqttEvent>((event, emit) {
+      mqttRepository.triggerRefetchSchedule();
     });
   }
 }

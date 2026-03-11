@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skripsi_iot_projector/model/schedule_model.dart';
+import 'package:skripsi_iot_projector/page/bloc/mqtt/mqtt_bloc.dart';
 import 'package:skripsi_iot_projector/page/bloc/schedule/schedule_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
@@ -27,29 +28,177 @@ class ScheduleListView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 10),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.canvasColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
-            ),
-            boxShadow: isDark
-                ? []
-                : [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 5,
-                      offset: const Offset(0, 2),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: theme.canvasColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white10
+                      : Colors.black.withOpacity(0.06),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    size: 18,
+                    color: theme.primaryColor,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    DateFormat('d MMMM yyyy').format(selectedDay!),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                     ),
-                  ],
-          ),
-          child: Text(
-            DateFormat('d MMMM yyyy').format(selectedDay!),
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 9.0),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 18,
+                  ),
+                ),
+                icon: const Icon(Icons.swap_horiz_rounded, size: 20),
+                label: const Text(
+                  "Ganti Jadwal",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      backgroundColor: theme.scaffoldBackgroundColor,
+                      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                      title: Row(
+                        children: [
+                          Icon(Icons.swap_horiz_rounded, color: Colors.orange),
+                          const SizedBox(width: 10),
+                          const Text(
+                            "Ganti Jadwal",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      content: SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.3,
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: Colors.orange.withOpacity(0.2),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.warning_amber_rounded,
+                                color: Colors.orange,
+                                size: 32,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Text(
+                                  "Apakah Anda yakin ingin menghapus semua jadwal dan mengunggah jadwal baru? Tindakan ini tidak dapat dibatalkan.",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: isDark
+                                        ? Colors.grey[300]
+                                        : Colors.grey[700],
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      actions: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Text(
+                                    "Batal",
+                                    style: TextStyle(color: theme.primaryColor),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 15,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    context.read<ScheduleBloc>().add(
+                                      ReplaceScheduleEvent(),
+                                    );
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text(
+                                    "Ganti Jadwal",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
         Expanded(
           child: Container(
@@ -59,13 +208,13 @@ class ScheduleListView extends StatelessWidget {
               color: theme.canvasColor,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                color: isDark ? Colors.white10 : Colors.black.withOpacity(0.06),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
+                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -75,8 +224,29 @@ class ScheduleListView extends StatelessWidget {
                   return const Center(child: CircularProgressIndicator());
                 } else {
                   return scheduleForSelectedDay.isEmpty
-                      ? const Center(
-                          child: Text("Tidak ada jadwal untuk hari ini"),
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.event_busy_rounded,
+                                size: 48,
+                                color: isDark
+                                    ? Colors.white24
+                                    : Colors.grey[300],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                "Tidak ada jadwal untuk hari ini",
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.grey[500]
+                                      : Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
                         )
                       : ListView.builder(
                           shrinkWrap: true,
@@ -91,37 +261,55 @@ class ScheduleListView extends StatelessWidget {
 
                             return IntrinsicHeight(
                               child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // Time column
                                   Container(
-                                    width: 100,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 20,
-                                    ),
+                                    width: 90,
+                                    padding: const EdgeInsets.only(top: 16),
                                     child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          timeKey,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
-                                            color: Theme.of(
-                                              context,
-                                            ).primaryColor,
+                                        Container(
+                                          margin: const EdgeInsets.only(
+                                            bottom: 3,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: theme.primaryColor
+                                                .withOpacity(0.08),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            timeKey,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 15,
+                                              color: theme.primaryColor,
+                                            ),
                                           ),
                                         ),
                                         Container(
-                                          width: 2,
-                                          height: 20,
-                                          color: Colors.grey.withOpacity(0.3),
+                                          width: 1.5,
+                                          height: 14,
+                                          margin: const EdgeInsets.symmetric(
+                                            vertical: 4,
+                                          ),
+                                          color: isDark
+                                              ? Colors.grey.withOpacity(0.7)
+                                              : Colors.grey.withOpacity(0.4),
                                         ),
                                         Text(
                                           classesAtThisTime.first.endTime,
                                           style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey[600],
+                                            fontSize: 13,
+                                            color: isDark
+                                                ? Colors.grey[600]
+                                                : Colors.grey[500],
                                           ),
                                         ),
                                       ],
@@ -153,637 +341,707 @@ class ScheduleListView extends StatelessWidget {
                                                 },
                                                 child: Column(
                                                   children: [
-                                                    Material(
-                                                      color: Colors.transparent,
-                                                      child: InkWell(
-                                                        onTap: () => context.push(
-                                                          '/dashboard/detail/${schedule.classroom}',
-                                                        ),
-                                                        hoverColor: Theme.of(
-                                                          context,
-                                                        ).hoverColor,
-                                                        splashColor:
-                                                            Colors.transparent,
-                                                        child: Container(
-                                                          padding:
-                                                              const EdgeInsets.symmetric(
-                                                                horizontal: 16,
-                                                                vertical: 12,
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            bottom: 6,
+                                                          ),
+                                                      child: Material(
+                                                        color: isDark
+                                                            ? Colors.white
+                                                                  .withOpacity(
+                                                                    0.02,
+                                                                  )
+                                                            : Colors.black
+                                                                  .withOpacity(
+                                                                    0.015,
+                                                                  ),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              10,
+                                                            ),
+                                                        clipBehavior:
+                                                            Clip.antiAlias,
+                                                        child: InkWell(
+                                                          onTap: () => context.push(
+                                                            '/dashboard/detail/${schedule.classroom}',
+                                                          ),
+                                                          hoverColor:
+                                                              theme.hoverColor,
+                                                          splashColor: Colors
+                                                              .transparent,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                10,
                                                               ),
-                                                          decoration: BoxDecoration(
-                                                            border: Border(
-                                                              left: BorderSide(
-                                                                color:
-                                                                    Theme.of(
-                                                                          context,
-                                                                        )
+                                                          child: Container(
+                                                            padding:
+                                                                const EdgeInsets.symmetric(
+                                                                  horizontal:
+                                                                      16,
+                                                                  vertical: 14,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    10,
+                                                                  ),
+                                                              border: Border.all(
+                                                                color: isDark
+                                                                    ? Colors
+                                                                          .white
+                                                                          .withOpacity(
+                                                                            0.04,
+                                                                          )
+                                                                    : Colors
+                                                                          .black
+                                                                          .withOpacity(
+                                                                            0.03,
+                                                                          ),
+                                                              ),
+                                                            ),
+                                                            child: Row(
+                                                              children: [
+                                                                Container(
+                                                                  width: 4,
+                                                                  height: 40,
+                                                                  margin:
+                                                                      const EdgeInsets.only(
+                                                                        right:
+                                                                            14,
+                                                                      ),
+                                                                  decoration: BoxDecoration(
+                                                                    color: theme
                                                                         .primaryColor
                                                                         .withOpacity(
                                                                           0.5,
                                                                         ),
-                                                                width: 3,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          child: Row(
-                                                            children: [
-                                                              Expanded(
-                                                                child: Column(
-                                                                  crossAxisAlignment:
-                                                                      CrossAxisAlignment
-                                                                          .start,
-                                                                  children: [
-                                                                    Text(
-                                                                      schedule
-                                                                          .mataKuliah,
-                                                                      style: const TextStyle(
-                                                                        fontWeight:
-                                                                            FontWeight.bold,
-                                                                        fontSize:
-                                                                            19,
-                                                                      ),
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          12,
-                                                                    ),
-                                                                    Row(
-                                                                      children: [
-                                                                        const Icon(
-                                                                          FontAwesomeIcons
-                                                                              .locationDot,
-                                                                          size:
-                                                                              14,
-                                                                          color:
-                                                                              Colors.grey,
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          2,
                                                                         ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              8,
-                                                                        ),
-                                                                        Text(
-                                                                          schedule
-                                                                              .classroom,
-                                                                          style: TextStyle(
-                                                                            color:
-                                                                                Colors.grey[400],
-                                                                            fontSize:
-                                                                                15,
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ],
+                                                                  ),
                                                                 ),
-                                                              ),
-                                                              isHovered
-                                                                  ? Row(
-                                                                      children: [
-                                                                        IconButton(
-                                                                          icon: Icon(
-                                                                            Icons.edit_outlined,
-                                                                            color:
-                                                                                Colors.grey[600],
+                                                                Expanded(
+                                                                  child: Column(
+                                                                    crossAxisAlignment:
+                                                                        CrossAxisAlignment
+                                                                            .start,
+                                                                    children: [
+                                                                      Text(
+                                                                        schedule
+                                                                            .mataKuliah,
+                                                                        style: const TextStyle(
+                                                                          fontWeight:
+                                                                              FontWeight.bold,
+                                                                          fontSize:
+                                                                              16,
+                                                                        ),
+                                                                      ),
+                                                                      const SizedBox(
+                                                                        height:
+                                                                            6,
+                                                                      ),
+                                                                      Row(
+                                                                        children: [
+                                                                          Icon(
+                                                                            FontAwesomeIcons.locationDot,
                                                                             size:
-                                                                                20,
+                                                                                12,
+                                                                            color:
+                                                                                isDark
+                                                                                ? Colors.grey[600]
+                                                                                : Colors.grey[500],
                                                                           ),
-                                                                          onPressed: () {
-                                                                            showDialog(
-                                                                              context: context,
-                                                                              builder:
-                                                                                  (
-                                                                                    context,
-                                                                                  ) => StatefulBuilder(
-                                                                                    builder:
-                                                                                        (
-                                                                                          context,
-                                                                                          setState,
-                                                                                        ) {
-                                                                                          return AlertDialog(
-                                                                                            shape: RoundedRectangleBorder(
-                                                                                              borderRadius: BorderRadius.circular(
-                                                                                                20,
+                                                                          const SizedBox(
+                                                                            width:
+                                                                                8,
+                                                                          ),
+                                                                          Text(
+                                                                            schedule.classroom,
+                                                                            style: TextStyle(
+                                                                              color: isDark
+                                                                                  ? Colors.grey[500]
+                                                                                  : Colors.grey[600],
+                                                                              fontSize: 13,
+                                                                            ),
+                                                                          ),
+                                                                          const SizedBox(
+                                                                            width:
+                                                                                16,
+                                                                          ),
+                                                                          Icon(
+                                                                            Icons.access_time_rounded,
+                                                                            size:
+                                                                                12,
+                                                                            color:
+                                                                                isDark
+                                                                                ? Colors.grey[600]
+                                                                                : Colors.grey[500],
+                                                                          ),
+                                                                          const SizedBox(
+                                                                            width:
+                                                                                6,
+                                                                          ),
+                                                                          Text(
+                                                                            "${schedule.startTime} - ${schedule.endTime}",
+                                                                            style: TextStyle(
+                                                                              color: isDark
+                                                                                  ? Colors.grey[500]
+                                                                                  : Colors.grey[600],
+                                                                              fontSize: 13,
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                                isHovered
+                                                                    ? Row(
+                                                                        children: [
+                                                                          IconButton(
+                                                                            icon: Icon(
+                                                                              Icons.edit_outlined,
+                                                                              color: Colors.grey[600],
+                                                                              size: 20,
+                                                                            ),
+                                                                            onPressed: () {
+                                                                              showDialog(
+                                                                                context: context,
+                                                                                builder:
+                                                                                    (
+                                                                                      context,
+                                                                                    ) => StatefulBuilder(
+                                                                                      builder:
+                                                                                          (
+                                                                                            context,
+                                                                                            setState,
+                                                                                          ) {
+                                                                                            return AlertDialog(
+                                                                                              shape: RoundedRectangleBorder(
+                                                                                                borderRadius: BorderRadius.circular(
+                                                                                                  20,
+                                                                                                ),
                                                                                               ),
-                                                                                            ),
-                                                                                            backgroundColor: theme.scaffoldBackgroundColor,
-                                                                                            titlePadding: const EdgeInsets.fromLTRB(
-                                                                                              24,
-                                                                                              24,
-                                                                                              24,
-                                                                                              0,
-                                                                                            ),
-                                                                                            title: Row(
-                                                                                              children: [
-                                                                                                Icon(
-                                                                                                  Icons.edit_calendar,
-                                                                                                  color: theme.primaryColor,
-                                                                                                ),
-                                                                                                const SizedBox(
-                                                                                                  width: 10,
-                                                                                                ),
-                                                                                                const Text(
-                                                                                                  "Edit Jam Kuliah",
-                                                                                                  style: TextStyle(
-                                                                                                    fontSize: 20,
-                                                                                                    fontWeight: FontWeight.bold,
+                                                                                              backgroundColor: theme.scaffoldBackgroundColor,
+                                                                                              titlePadding: const EdgeInsets.fromLTRB(
+                                                                                                24,
+                                                                                                24,
+                                                                                                24,
+                                                                                                0,
+                                                                                              ),
+                                                                                              title: Row(
+                                                                                                children: [
+                                                                                                  Icon(
+                                                                                                    Icons.edit_calendar,
+                                                                                                    color: theme.primaryColor,
                                                                                                   ),
-                                                                                                ),
-                                                                                              ],
-                                                                                            ),
-                                                                                            content: SizedBox(
-                                                                                              width:
-                                                                                                  MediaQuery.of(
-                                                                                                    context,
-                                                                                                  ).size.width *
-                                                                                                  0.3,
-                                                                                              child: SingleChildScrollView(
-                                                                                                child: Column(
-                                                                                                  mainAxisSize: MainAxisSize.min,
-                                                                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                                  children: [
-                                                                                                    Container(
-                                                                                                      width: double.infinity,
-                                                                                                      padding: const EdgeInsets.all(
-                                                                                                        16,
-                                                                                                      ),
-                                                                                                      decoration: BoxDecoration(
-                                                                                                        color: theme.primaryColor.withOpacity(
-                                                                                                          0.05,
+                                                                                                  const SizedBox(
+                                                                                                    width: 10,
+                                                                                                  ),
+                                                                                                  const Text(
+                                                                                                    "Edit Jam Kuliah",
+                                                                                                    style: TextStyle(
+                                                                                                      fontSize: 20,
+                                                                                                      fontWeight: FontWeight.bold,
+                                                                                                    ),
+                                                                                                  ),
+                                                                                                ],
+                                                                                              ),
+                                                                                              content: SizedBox(
+                                                                                                width:
+                                                                                                    MediaQuery.of(
+                                                                                                      context,
+                                                                                                    ).size.width *
+                                                                                                    0.3,
+                                                                                                child: SingleChildScrollView(
+                                                                                                  child: Column(
+                                                                                                    mainAxisSize: MainAxisSize.min,
+                                                                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                                    children: [
+                                                                                                      Container(
+                                                                                                        width: double.infinity,
+                                                                                                        padding: const EdgeInsets.all(
+                                                                                                          16,
                                                                                                         ),
-                                                                                                        borderRadius: BorderRadius.circular(
-                                                                                                          15,
-                                                                                                        ),
-                                                                                                        border: Border.all(
+                                                                                                        decoration: BoxDecoration(
                                                                                                           color: theme.primaryColor.withOpacity(
-                                                                                                            0.1,
+                                                                                                            0.05,
                                                                                                           ),
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                      child: Column(
-                                                                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                                        children: [
-                                                                                                          Text(
-                                                                                                            "MATA KULIAH",
-                                                                                                            style: TextStyle(
-                                                                                                              fontSize: 12,
-                                                                                                              color: Colors.grey[600],
-                                                                                                              letterSpacing: 1.2,
+                                                                                                          borderRadius: BorderRadius.circular(
+                                                                                                            15,
+                                                                                                          ),
+                                                                                                          border: Border.all(
+                                                                                                            color: theme.primaryColor.withOpacity(
+                                                                                                              0.1,
                                                                                                             ),
                                                                                                           ),
-                                                                                                          Text(
-                                                                                                            schedule.mataKuliah,
-                                                                                                            style: const TextStyle(
-                                                                                                              fontWeight: FontWeight.bold,
-                                                                                                              fontSize: 16,
+                                                                                                        ),
+                                                                                                        child: Column(
+                                                                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                                          children: [
+                                                                                                            Text(
+                                                                                                              "MATA KULIAH",
+                                                                                                              style: TextStyle(
+                                                                                                                fontSize: 12,
+                                                                                                                color: Colors.grey[600],
+                                                                                                                letterSpacing: 1.2,
+                                                                                                              ),
+                                                                                                            ),
+                                                                                                            Text(
+                                                                                                              schedule.mataKuliah,
+                                                                                                              style: const TextStyle(
+                                                                                                                fontWeight: FontWeight.bold,
+                                                                                                                fontSize: 16,
+                                                                                                              ),
+                                                                                                            ),
+                                                                                                            const SizedBox(
+                                                                                                              height: 8,
+                                                                                                            ),
+                                                                                                            Text(
+                                                                                                              "RUANGAN",
+                                                                                                              style: TextStyle(
+                                                                                                                fontSize: 12,
+                                                                                                                color: Colors.grey[600],
+                                                                                                                letterSpacing: 1.2,
+                                                                                                              ),
+                                                                                                            ),
+                                                                                                            Text(
+                                                                                                              schedule.classroom,
+                                                                                                              style: const TextStyle(
+                                                                                                                fontWeight: FontWeight.bold,
+                                                                                                                fontSize: 16,
+                                                                                                              ),
+                                                                                                            ),
+                                                                                                          ],
+                                                                                                        ),
+                                                                                                      ),
+                                                                                                      const Padding(
+                                                                                                        padding: EdgeInsets.symmetric(
+                                                                                                          vertical: 20,
+                                                                                                        ),
+                                                                                                        child: Text(
+                                                                                                          "Sesuaikan Waktu Kuliah:",
+                                                                                                          style: TextStyle(
+                                                                                                            fontWeight: FontWeight.bold,
+                                                                                                            fontSize: 16,
+                                                                                                          ),
+                                                                                                        ),
+                                                                                                      ),
+                                                                                                      Row(
+                                                                                                        children: [
+                                                                                                          // Jam Mulai
+                                                                                                          Expanded(
+                                                                                                            child: InkWell(
+                                                                                                              onTap: () async {
+                                                                                                                final TimeOfDay? picked = await showTimePicker(
+                                                                                                                  context: context,
+                                                                                                                  initialTime: TimeOfDay(
+                                                                                                                    hour: int.parse(
+                                                                                                                      currentStart.split(
+                                                                                                                        ":",
+                                                                                                                      )[0],
+                                                                                                                    ),
+                                                                                                                    minute: int.parse(
+                                                                                                                      currentStart.split(
+                                                                                                                        ":",
+                                                                                                                      )[1],
+                                                                                                                    ),
+                                                                                                                  ),
+                                                                                                                  builder:
+                                                                                                                      (
+                                                                                                                        context,
+                                                                                                                        child,
+                                                                                                                      ) {
+                                                                                                                        return Theme(
+                                                                                                                          data: theme.copyWith(
+                                                                                                                            colorScheme: theme.colorScheme.copyWith(
+                                                                                                                              surface: theme.scaffoldBackgroundColor,
+                                                                                                                              primary: theme.primaryColor,
+                                                                                                                              onPrimary: theme.focusColor,
+                                                                                                                            ),
+                                                                                                                            textButtonTheme: TextButtonThemeData(
+                                                                                                                              style: TextButton.styleFrom(
+                                                                                                                                foregroundColor: theme.primaryColor,
+                                                                                                                              ),
+                                                                                                                            ),
+                                                                                                                            timePickerTheme: TimePickerThemeData(
+                                                                                                                              confirmButtonStyle: ElevatedButton.styleFrom(
+                                                                                                                                textStyle: TextStyle(
+                                                                                                                                  fontWeight: FontWeight.bold,
+                                                                                                                                ),
+                                                                                                                                backgroundColor: theme.primaryColor,
+                                                                                                                                foregroundColor: theme.focusColor,
+                                                                                                                                elevation: 0,
+                                                                                                                                shape: RoundedRectangleBorder(
+                                                                                                                                  borderRadius: BorderRadius.circular(
+                                                                                                                                    12,
+                                                                                                                                  ),
+                                                                                                                                ),
+                                                                                                                                padding: const EdgeInsets.symmetric(
+                                                                                                                                  vertical: 15,
+                                                                                                                                ),
+                                                                                                                              ),
+                                                                                                                              dialBackgroundColor: theme.primaryColor.withOpacity(
+                                                                                                                                0.1,
+                                                                                                                              ),
+                                                                                                                              backgroundColor: theme.scaffoldBackgroundColor,
+                                                                                                                              hourMinuteColor: WidgetStateColor.resolveWith(
+                                                                                                                                (
+                                                                                                                                  states,
+                                                                                                                                ) {
+                                                                                                                                  if (states.contains(
+                                                                                                                                    WidgetState.selected,
+                                                                                                                                  )) {
+                                                                                                                                    return theme.primaryColor.withOpacity(
+                                                                                                                                      0.3,
+                                                                                                                                    );
+                                                                                                                                  }
+                                                                                                                                  return theme.primaryColor.withOpacity(
+                                                                                                                                    0.1,
+                                                                                                                                  );
+                                                                                                                                },
+                                                                                                                              ),
+                                                                                                                              hourMinuteTextColor: theme.primaryColor,
+                                                                                                                            ),
+                                                                                                                          ),
+                                                                                                                          child: MediaQuery(
+                                                                                                                            data:
+                                                                                                                                MediaQuery.of(
+                                                                                                                                  context,
+                                                                                                                                ).copyWith(
+                                                                                                                                  alwaysUse24HourFormat: true,
+                                                                                                                                ),
+                                                                                                                            child: child!,
+                                                                                                                          ),
+                                                                                                                        );
+                                                                                                                      },
+                                                                                                                );
+                                                                                                                if (picked !=
+                                                                                                                    null) {
+                                                                                                                  setState(
+                                                                                                                    () {
+                                                                                                                      currentStart = "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+                                                                                                                    },
+                                                                                                                  );
+                                                                                                                }
+                                                                                                              },
+                                                                                                              child: Container(
+                                                                                                                padding: const EdgeInsets.all(
+                                                                                                                  15,
+                                                                                                                ),
+                                                                                                                decoration: BoxDecoration(
+                                                                                                                  border: Border.all(
+                                                                                                                    color: theme.primaryColor.withOpacity(
+                                                                                                                      0.3,
+                                                                                                                    ),
+                                                                                                                  ),
+                                                                                                                  borderRadius: BorderRadius.circular(
+                                                                                                                    12,
+                                                                                                                  ),
+                                                                                                                ),
+                                                                                                                child: Column(
+                                                                                                                  children: [
+                                                                                                                    const Text(
+                                                                                                                      "Mulai",
+                                                                                                                      style: TextStyle(
+                                                                                                                        fontSize: 12,
+                                                                                                                        color: Colors.grey,
+                                                                                                                      ),
+                                                                                                                    ),
+                                                                                                                    const SizedBox(
+                                                                                                                      height: 5,
+                                                                                                                    ),
+                                                                                                                    Text(
+                                                                                                                      currentStart,
+                                                                                                                      style: const TextStyle(
+                                                                                                                        fontSize: 20,
+                                                                                                                        fontWeight: FontWeight.bold,
+                                                                                                                      ),
+                                                                                                                    ),
+                                                                                                                  ],
+                                                                                                                ),
+                                                                                                              ),
                                                                                                             ),
                                                                                                           ),
                                                                                                           const SizedBox(
-                                                                                                            height: 8,
+                                                                                                            width: 15,
                                                                                                           ),
-                                                                                                          Text(
-                                                                                                            "RUANGAN",
-                                                                                                            style: TextStyle(
-                                                                                                              fontSize: 12,
-                                                                                                              color: Colors.grey[600],
-                                                                                                              letterSpacing: 1.2,
-                                                                                                            ),
-                                                                                                          ),
-                                                                                                          Text(
-                                                                                                            schedule.classroom,
-                                                                                                            style: const TextStyle(
-                                                                                                              fontWeight: FontWeight.bold,
-                                                                                                              fontSize: 16,
+                                                                                                          // Jam Selesai
+                                                                                                          Expanded(
+                                                                                                            child: InkWell(
+                                                                                                              onTap: () async {
+                                                                                                                final TimeOfDay? picked = await showTimePicker(
+                                                                                                                  context: context,
+                                                                                                                  initialTime: TimeOfDay(
+                                                                                                                    hour: int.parse(
+                                                                                                                      currentEnd.split(
+                                                                                                                        ":",
+                                                                                                                      )[0],
+                                                                                                                    ),
+                                                                                                                    minute: int.parse(
+                                                                                                                      currentEnd.split(
+                                                                                                                        ":",
+                                                                                                                      )[1],
+                                                                                                                    ),
+                                                                                                                  ),
+                                                                                                                  builder:
+                                                                                                                      (
+                                                                                                                        context,
+                                                                                                                        child,
+                                                                                                                      ) {
+                                                                                                                        return Theme(
+                                                                                                                          data: theme.copyWith(
+                                                                                                                            colorScheme: theme.colorScheme.copyWith(
+                                                                                                                              surface: theme.scaffoldBackgroundColor,
+                                                                                                                              primary: theme.primaryColor,
+                                                                                                                              onPrimary: theme.focusColor,
+                                                                                                                            ),
+                                                                                                                            textButtonTheme: TextButtonThemeData(
+                                                                                                                              style: TextButton.styleFrom(
+                                                                                                                                foregroundColor: theme.primaryColor,
+                                                                                                                              ),
+                                                                                                                            ),
+                                                                                                                            timePickerTheme: TimePickerThemeData(
+                                                                                                                              confirmButtonStyle: ElevatedButton.styleFrom(
+                                                                                                                                textStyle: TextStyle(
+                                                                                                                                  fontWeight: FontWeight.bold,
+                                                                                                                                ),
+                                                                                                                                backgroundColor: theme.primaryColor,
+                                                                                                                                foregroundColor: theme.focusColor,
+                                                                                                                                elevation: 0,
+                                                                                                                                shape: RoundedRectangleBorder(
+                                                                                                                                  borderRadius: BorderRadius.circular(
+                                                                                                                                    12,
+                                                                                                                                  ),
+                                                                                                                                ),
+                                                                                                                                padding: const EdgeInsets.symmetric(
+                                                                                                                                  vertical: 15,
+                                                                                                                                ),
+                                                                                                                              ),
+                                                                                                                              dialBackgroundColor: theme.primaryColor.withOpacity(
+                                                                                                                                0.1,
+                                                                                                                              ),
+                                                                                                                              backgroundColor: theme.scaffoldBackgroundColor,
+                                                                                                                              hourMinuteColor: WidgetStateColor.resolveWith(
+                                                                                                                                (
+                                                                                                                                  states,
+                                                                                                                                ) {
+                                                                                                                                  if (states.contains(
+                                                                                                                                    WidgetState.selected,
+                                                                                                                                  )) {
+                                                                                                                                    return theme.primaryColor.withOpacity(
+                                                                                                                                      0.3,
+                                                                                                                                    );
+                                                                                                                                  }
+                                                                                                                                  return theme.primaryColor.withOpacity(
+                                                                                                                                    0.1,
+                                                                                                                                  );
+                                                                                                                                },
+                                                                                                                              ),
+                                                                                                                              hourMinuteTextColor: theme.primaryColor,
+                                                                                                                            ),
+                                                                                                                          ),
+                                                                                                                          child: MediaQuery(
+                                                                                                                            data:
+                                                                                                                                MediaQuery.of(
+                                                                                                                                  context,
+                                                                                                                                ).copyWith(
+                                                                                                                                  alwaysUse24HourFormat: true,
+                                                                                                                                ),
+                                                                                                                            child: child!,
+                                                                                                                          ),
+                                                                                                                        );
+                                                                                                                      },
+                                                                                                                );
+                                                                                                                if (picked !=
+                                                                                                                    null) {
+                                                                                                                  setState(
+                                                                                                                    () {
+                                                                                                                      currentEnd = "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+                                                                                                                    },
+                                                                                                                  );
+                                                                                                                }
+                                                                                                              },
+                                                                                                              child: Container(
+                                                                                                                padding: const EdgeInsets.all(
+                                                                                                                  15,
+                                                                                                                ),
+                                                                                                                decoration: BoxDecoration(
+                                                                                                                  border: Border.all(
+                                                                                                                    color: theme.primaryColor.withOpacity(
+                                                                                                                      0.3,
+                                                                                                                    ),
+                                                                                                                  ),
+                                                                                                                  borderRadius: BorderRadius.circular(
+                                                                                                                    12,
+                                                                                                                  ),
+                                                                                                                ),
+                                                                                                                child: Column(
+                                                                                                                  children: [
+                                                                                                                    const Text(
+                                                                                                                      "Selesai",
+                                                                                                                      style: TextStyle(
+                                                                                                                        fontSize: 12,
+                                                                                                                        color: Colors.grey,
+                                                                                                                      ),
+                                                                                                                    ),
+                                                                                                                    const SizedBox(
+                                                                                                                      height: 5,
+                                                                                                                    ),
+                                                                                                                    Text(
+                                                                                                                      currentEnd,
+                                                                                                                      style: const TextStyle(
+                                                                                                                        fontSize: 20,
+                                                                                                                        fontWeight: FontWeight.bold,
+                                                                                                                      ),
+                                                                                                                    ),
+                                                                                                                  ],
+                                                                                                                ),
+                                                                                                              ),
                                                                                                             ),
                                                                                                           ),
                                                                                                         ],
                                                                                                       ),
-                                                                                                    ),
-                                                                                                    const Padding(
-                                                                                                      padding: EdgeInsets.symmetric(
-                                                                                                        vertical: 20,
-                                                                                                      ),
-                                                                                                      child: Text(
-                                                                                                        "Sesuaikan Waktu Kuliah:",
-                                                                                                        style: TextStyle(
-                                                                                                          fontWeight: FontWeight.bold,
-                                                                                                          fontSize: 16,
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                    Row(
-                                                                                                      children: [
-                                                                                                        // Jam Mulai
-                                                                                                        Expanded(
-                                                                                                          child: InkWell(
-                                                                                                            onTap: () async {
-                                                                                                              final TimeOfDay? picked = await showTimePicker(
-                                                                                                                context: context,
-                                                                                                                initialTime: TimeOfDay(
-                                                                                                                  hour: int.parse(
-                                                                                                                    currentStart.split(
-                                                                                                                      ":",
-                                                                                                                    )[0],
-                                                                                                                  ),
-                                                                                                                  minute: int.parse(
-                                                                                                                    currentStart.split(
-                                                                                                                      ":",
-                                                                                                                    )[1],
-                                                                                                                  ),
-                                                                                                                ),
-                                                                                                                builder:
-                                                                                                                    (
-                                                                                                                      context,
-                                                                                                                      child,
-                                                                                                                    ) {
-                                                                                                                      return Theme(
-                                                                                                                        data: theme.copyWith(
-                                                                                                                          colorScheme: theme.colorScheme.copyWith(
-                                                                                                                            surface: theme.scaffoldBackgroundColor,
-                                                                                                                            primary: theme.primaryColor,
-                                                                                                                            onPrimary: theme.focusColor,
-                                                                                                                          ),
-                                                                                                                          textButtonTheme: TextButtonThemeData(
-                                                                                                                            style: TextButton.styleFrom(
-                                                                                                                              foregroundColor: theme.primaryColor,
-                                                                                                                            ),
-                                                                                                                          ),
-                                                                                                                          timePickerTheme: TimePickerThemeData(
-                                                                                                                            confirmButtonStyle: ElevatedButton.styleFrom(
-                                                                                                                              textStyle: TextStyle(
-                                                                                                                                fontWeight: FontWeight.bold,
-                                                                                                                              ),
-                                                                                                                              backgroundColor: theme.primaryColor,
-                                                                                                                              foregroundColor: theme.focusColor,
-                                                                                                                              elevation: 0,
-                                                                                                                              shape: RoundedRectangleBorder(
-                                                                                                                                borderRadius: BorderRadius.circular(
-                                                                                                                                  12,
-                                                                                                                                ),
-                                                                                                                              ),
-                                                                                                                              padding: const EdgeInsets.symmetric(
-                                                                                                                                vertical: 15,
-                                                                                                                              ),
-                                                                                                                            ),
-                                                                                                                            dialBackgroundColor: theme.primaryColor.withOpacity(
-                                                                                                                              0.1,
-                                                                                                                            ),
-                                                                                                                            backgroundColor: theme.scaffoldBackgroundColor,
-                                                                                                                            hourMinuteColor: WidgetStateColor.resolveWith(
-                                                                                                                              (
-                                                                                                                                states,
-                                                                                                                              ) {
-                                                                                                                                if (states.contains(
-                                                                                                                                  WidgetState.selected,
-                                                                                                                                )) {
-                                                                                                                                  return theme.primaryColor.withOpacity(
-                                                                                                                                    0.3,
-                                                                                                                                  );
-                                                                                                                                }
-                                                                                                                                return theme.primaryColor.withOpacity(
-                                                                                                                                  0.1,
-                                                                                                                                );
-                                                                                                                              },
-                                                                                                                            ),
-                                                                                                                            hourMinuteTextColor: theme.primaryColor,
-                                                                                                                          ),
-                                                                                                                        ),
-                                                                                                                        child: MediaQuery(
-                                                                                                                          data:
-                                                                                                                              MediaQuery.of(
-                                                                                                                                context,
-                                                                                                                              ).copyWith(
-                                                                                                                                alwaysUse24HourFormat: true,
-                                                                                                                              ),
-                                                                                                                          child: child!,
-                                                                                                                        ),
-                                                                                                                      );
-                                                                                                                    },
-                                                                                                              );
-                                                                                                              if (picked !=
-                                                                                                                  null) {
-                                                                                                                setState(
-                                                                                                                  () {
-                                                                                                                    currentStart = "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
-                                                                                                                  },
-                                                                                                                );
-                                                                                                              }
-                                                                                                            },
-                                                                                                            child: Container(
-                                                                                                              padding: const EdgeInsets.all(
-                                                                                                                15,
-                                                                                                              ),
-                                                                                                              decoration: BoxDecoration(
-                                                                                                                border: Border.all(
-                                                                                                                  color: theme.primaryColor.withOpacity(
-                                                                                                                    0.3,
-                                                                                                                  ),
-                                                                                                                ),
-                                                                                                                borderRadius: BorderRadius.circular(
-                                                                                                                  12,
-                                                                                                                ),
-                                                                                                              ),
-                                                                                                              child: Column(
-                                                                                                                children: [
-                                                                                                                  const Text(
-                                                                                                                    "Mulai",
-                                                                                                                    style: TextStyle(
-                                                                                                                      fontSize: 12,
-                                                                                                                      color: Colors.grey,
-                                                                                                                    ),
-                                                                                                                  ),
-                                                                                                                  const SizedBox(
-                                                                                                                    height: 5,
-                                                                                                                  ),
-                                                                                                                  Text(
-                                                                                                                    currentStart,
-                                                                                                                    style: const TextStyle(
-                                                                                                                      fontSize: 20,
-                                                                                                                      fontWeight: FontWeight.bold,
-                                                                                                                    ),
-                                                                                                                  ),
-                                                                                                                ],
-                                                                                                              ),
-                                                                                                            ),
-                                                                                                          ),
-                                                                                                        ),
-                                                                                                        const SizedBox(
-                                                                                                          width: 15,
-                                                                                                        ),
-                                                                                                        // Jam Selesai
-                                                                                                        Expanded(
-                                                                                                          child: InkWell(
-                                                                                                            onTap: () async {
-                                                                                                              final TimeOfDay? picked = await showTimePicker(
-                                                                                                                context: context,
-                                                                                                                initialTime: TimeOfDay(
-                                                                                                                  hour: int.parse(
-                                                                                                                    currentEnd.split(
-                                                                                                                      ":",
-                                                                                                                    )[0],
-                                                                                                                  ),
-                                                                                                                  minute: int.parse(
-                                                                                                                    currentEnd.split(
-                                                                                                                      ":",
-                                                                                                                    )[1],
-                                                                                                                  ),
-                                                                                                                ),
-                                                                                                                builder:
-                                                                                                                    (
-                                                                                                                      context,
-                                                                                                                      child,
-                                                                                                                    ) {
-                                                                                                                      return Theme(
-                                                                                                                        data: theme.copyWith(
-                                                                                                                          colorScheme: theme.colorScheme.copyWith(
-                                                                                                                            surface: theme.scaffoldBackgroundColor,
-                                                                                                                            primary: theme.primaryColor,
-                                                                                                                            onPrimary: theme.focusColor,
-                                                                                                                          ),
-                                                                                                                          textButtonTheme: TextButtonThemeData(
-                                                                                                                            style: TextButton.styleFrom(
-                                                                                                                              foregroundColor: theme.primaryColor,
-                                                                                                                            ),
-                                                                                                                          ),
-                                                                                                                          timePickerTheme: TimePickerThemeData(
-                                                                                                                            confirmButtonStyle: ElevatedButton.styleFrom(
-                                                                                                                              textStyle: TextStyle(
-                                                                                                                                fontWeight: FontWeight.bold,
-                                                                                                                              ),
-                                                                                                                              backgroundColor: theme.primaryColor,
-                                                                                                                              foregroundColor: theme.focusColor,
-                                                                                                                              elevation: 0,
-                                                                                                                              shape: RoundedRectangleBorder(
-                                                                                                                                borderRadius: BorderRadius.circular(
-                                                                                                                                  12,
-                                                                                                                                ),
-                                                                                                                              ),
-                                                                                                                              padding: const EdgeInsets.symmetric(
-                                                                                                                                vertical: 15,
-                                                                                                                              ),
-                                                                                                                            ),
-                                                                                                                            dialBackgroundColor: theme.primaryColor.withOpacity(
-                                                                                                                              0.1,
-                                                                                                                            ),
-                                                                                                                            backgroundColor: theme.scaffoldBackgroundColor,
-                                                                                                                            hourMinuteColor: WidgetStateColor.resolveWith(
-                                                                                                                              (
-                                                                                                                                states,
-                                                                                                                              ) {
-                                                                                                                                if (states.contains(
-                                                                                                                                  WidgetState.selected,
-                                                                                                                                )) {
-                                                                                                                                  return theme.primaryColor.withOpacity(
-                                                                                                                                    0.3,
-                                                                                                                                  );
-                                                                                                                                }
-                                                                                                                                return theme.primaryColor.withOpacity(
-                                                                                                                                  0.1,
-                                                                                                                                );
-                                                                                                                              },
-                                                                                                                            ),
-                                                                                                                            hourMinuteTextColor: theme.primaryColor,
-                                                                                                                          ),
-                                                                                                                        ),
-                                                                                                                        child: MediaQuery(
-                                                                                                                          data:
-                                                                                                                              MediaQuery.of(
-                                                                                                                                context,
-                                                                                                                              ).copyWith(
-                                                                                                                                alwaysUse24HourFormat: true,
-                                                                                                                              ),
-                                                                                                                          child: child!,
-                                                                                                                        ),
-                                                                                                                      );
-                                                                                                                    },
-                                                                                                              );
-                                                                                                              if (picked !=
-                                                                                                                  null) {
-                                                                                                                setState(
-                                                                                                                  () {
-                                                                                                                    currentEnd = "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
-                                                                                                                  },
-                                                                                                                );
-                                                                                                              }
-                                                                                                            },
-                                                                                                            child: Container(
-                                                                                                              padding: const EdgeInsets.all(
-                                                                                                                15,
-                                                                                                              ),
-                                                                                                              decoration: BoxDecoration(
-                                                                                                                border: Border.all(
-                                                                                                                  color: theme.primaryColor.withOpacity(
-                                                                                                                    0.3,
-                                                                                                                  ),
-                                                                                                                ),
-                                                                                                                borderRadius: BorderRadius.circular(
-                                                                                                                  12,
-                                                                                                                ),
-                                                                                                              ),
-                                                                                                              child: Column(
-                                                                                                                children: [
-                                                                                                                  const Text(
-                                                                                                                    "Selesai",
-                                                                                                                    style: TextStyle(
-                                                                                                                      fontSize: 12,
-                                                                                                                      color: Colors.grey,
-                                                                                                                    ),
-                                                                                                                  ),
-                                                                                                                  const SizedBox(
-                                                                                                                    height: 5,
-                                                                                                                  ),
-                                                                                                                  Text(
-                                                                                                                    currentEnd,
-                                                                                                                    style: const TextStyle(
-                                                                                                                      fontSize: 20,
-                                                                                                                      fontWeight: FontWeight.bold,
-                                                                                                                    ),
-                                                                                                                  ),
-                                                                                                                ],
-                                                                                                              ),
-                                                                                                            ),
-                                                                                                          ),
-                                                                                                        ),
-                                                                                                      ],
-                                                                                                    ),
-                                                                                                  ],
+                                                                                                    ],
+                                                                                                  ),
                                                                                                 ),
                                                                                               ),
-                                                                                            ),
-                                                                                            actionsPadding: const EdgeInsets.fromLTRB(
-                                                                                              16,
-                                                                                              0,
-                                                                                              16,
-                                                                                              16,
-                                                                                            ),
-                                                                                            actions: [
-                                                                                              SizedBox(
-                                                                                                width: double.infinity,
-                                                                                                child: Row(
-                                                                                                  children: [
-                                                                                                    Expanded(
-                                                                                                      child: TextButton(
-                                                                                                        onPressed: () => Navigator.pop(
-                                                                                                          context,
-                                                                                                        ),
-                                                                                                        child: Text(
-                                                                                                          "Batal",
-                                                                                                          style: TextStyle(
-                                                                                                            color: theme.primaryColor,
-                                                                                                          ),
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                    const SizedBox(
-                                                                                                      width: 10,
-                                                                                                    ),
-                                                                                                    Expanded(
-                                                                                                      // flex: 2,
-                                                                                                      child: ElevatedButton(
-                                                                                                        style: ElevatedButton.styleFrom(
-                                                                                                          backgroundColor: theme.primaryColor,
-                                                                                                          foregroundColor: Colors.white,
-                                                                                                          elevation: 0,
-                                                                                                          shape: RoundedRectangleBorder(
-                                                                                                            borderRadius: BorderRadius.circular(
-                                                                                                              12,
-                                                                                                            ),
-                                                                                                          ),
-                                                                                                          padding: const EdgeInsets.symmetric(
-                                                                                                            vertical: 15,
-                                                                                                          ),
-                                                                                                        ),
-                                                                                                        onPressed: () {
-                                                                                                          context
-                                                                                                              .read<
-                                                                                                                ScheduleBloc
-                                                                                                              >()
-                                                                                                              .add(
-                                                                                                                UpdateScheduleEvent(
-                                                                                                                  schedule: schedule,
-                                                                                                                  updatedScheduleDate: selectedDay!,
-                                                                                                                  newStartTime: currentStart,
-                                                                                                                  newEndTime: currentEnd,
-                                                                                                                ),
-                                                                                                              );
-                                                                                                          Navigator.pop(
+                                                                                              actionsPadding: const EdgeInsets.fromLTRB(
+                                                                                                16,
+                                                                                                0,
+                                                                                                16,
+                                                                                                16,
+                                                                                              ),
+                                                                                              actions: [
+                                                                                                SizedBox(
+                                                                                                  width: double.infinity,
+                                                                                                  child: Row(
+                                                                                                    children: [
+                                                                                                      Expanded(
+                                                                                                        child: TextButton(
+                                                                                                          onPressed: () => Navigator.pop(
                                                                                                             context,
-                                                                                                          );
-                                                                                                        },
-                                                                                                        child: Text(
-                                                                                                          "Simpan Jadwal",
-                                                                                                          style: TextStyle(
-                                                                                                            color: theme.focusColor,
-                                                                                                            fontWeight: FontWeight.bold,
+                                                                                                          ),
+                                                                                                          child: Text(
+                                                                                                            "Batal",
+                                                                                                            style: TextStyle(
+                                                                                                              color: theme.primaryColor,
+                                                                                                            ),
                                                                                                           ),
                                                                                                         ),
                                                                                                       ),
-                                                                                                    ),
-                                                                                                  ],
+                                                                                                      const SizedBox(
+                                                                                                        width: 10,
+                                                                                                      ),
+                                                                                                      Expanded(
+                                                                                                        // flex: 2,
+                                                                                                        child: ElevatedButton(
+                                                                                                          style: ElevatedButton.styleFrom(
+                                                                                                            backgroundColor: theme.primaryColor,
+                                                                                                            foregroundColor: Colors.white,
+                                                                                                            elevation: 0,
+                                                                                                            shape: RoundedRectangleBorder(
+                                                                                                              borderRadius: BorderRadius.circular(
+                                                                                                                12,
+                                                                                                              ),
+                                                                                                            ),
+                                                                                                            padding: const EdgeInsets.symmetric(
+                                                                                                              vertical: 15,
+                                                                                                            ),
+                                                                                                          ),
+                                                                                                          onPressed: () {
+                                                                                                            context
+                                                                                                                .read<
+                                                                                                                  ScheduleBloc
+                                                                                                                >()
+                                                                                                                .add(
+                                                                                                                  UpdateScheduleEvent(
+                                                                                                                    schedule: schedule,
+                                                                                                                    updatedScheduleDate: selectedDay!,
+                                                                                                                    newStartTime: currentStart,
+                                                                                                                    newEndTime: currentEnd,
+                                                                                                                  ),
+                                                                                                                );
+                                                                                                            Navigator.pop(
+                                                                                                              context,
+                                                                                                            );
+                                                                                                          },
+                                                                                                          child: Text(
+                                                                                                            "Simpan Jadwal",
+                                                                                                            style: TextStyle(
+                                                                                                              color: theme.focusColor,
+                                                                                                              fontWeight: FontWeight.bold,
+                                                                                                            ),
+                                                                                                          ),
+                                                                                                        ),
+                                                                                                      ),
+                                                                                                    ],
+                                                                                                  ),
                                                                                                 ),
-                                                                                              ),
-                                                                                            ],
-                                                                                          );
-                                                                                        },
-                                                                                  ),
-                                                                            );
-                                                                          },
-                                                                        ),
-                                                                        IconButton(
-                                                                          icon: const Icon(
-                                                                            Icons.delete_outline,
-                                                                            color:
-                                                                                Colors.redAccent,
-                                                                            size:
-                                                                                20,
+                                                                                              ],
+                                                                                            );
+                                                                                          },
+                                                                                    ),
+                                                                              );
+                                                                            },
                                                                           ),
-                                                                          onPressed: () {
-                                                                            showDialog(
-                                                                              context: context,
-                                                                              builder:
-                                                                                  (
-                                                                                    context,
-                                                                                  ) => AlertDialog(
-                                                                                    title: const Text(
-                                                                                      "Hapus Jadwal?",
-                                                                                    ),
-                                                                                    content: Text(
-                                                                                      "Apakah Anda yakin ingin menghapus jadwal ${schedule.mataKuliah}? Tindakan ini dilakukan jika Dosen berhalangan hadir.",
-                                                                                    ),
-                                                                                    actions: [
-                                                                                      TextButton(
-                                                                                        onPressed: () => Navigator.pop(
-                                                                                          context,
-                                                                                        ),
-                                                                                        style: TextButton.styleFrom(
-                                                                                          foregroundColor: Colors.black,
-                                                                                        ),
-                                                                                        child: const Text(
-                                                                                          "Batal",
-                                                                                        ),
+                                                                          IconButton(
+                                                                            icon: const Icon(
+                                                                              Icons.delete_outline,
+                                                                              color: Colors.redAccent,
+                                                                              size: 20,
+                                                                            ),
+                                                                            onPressed: () {
+                                                                              showDialog(
+                                                                                context: context,
+                                                                                builder:
+                                                                                    (
+                                                                                      context,
+                                                                                    ) => AlertDialog(
+                                                                                      title: const Text(
+                                                                                        "Hapus Jadwal?",
                                                                                       ),
-                                                                                      TextButton(
-                                                                                        onPressed: () {
-                                                                                          // BlocProvider.of<ScheduleBloc>(context).add(DeleteScheduleEvent(schedule.id));
-                                                                                          Navigator.pop(
+                                                                                      content: Text(
+                                                                                        "Apakah Anda yakin ingin menghapus jadwal ${schedule.mataKuliah}? Tindakan ini dilakukan jika Dosen berhalangan hadir.",
+                                                                                      ),
+                                                                                      actions: [
+                                                                                        TextButton(
+                                                                                          onPressed: () => Navigator.pop(
                                                                                             context,
-                                                                                          );
-                                                                                        },
-                                                                                        style: TextButton.styleFrom(
-                                                                                          foregroundColor: Colors.red,
+                                                                                          ),
+                                                                                          style: TextButton.styleFrom(
+                                                                                            foregroundColor: Colors.black,
+                                                                                          ),
+                                                                                          child: const Text(
+                                                                                            "Batal",
+                                                                                          ),
                                                                                         ),
-                                                                                        child: const Text(
-                                                                                          "Hapus",
+                                                                                        TextButton(
+                                                                                          onPressed: () {
+                                                                                            // BlocProvider.of<ScheduleBloc>(context).add(DeleteScheduleEvent(schedule.id));
+                                                                                            Navigator.pop(
+                                                                                              context,
+                                                                                            );
+                                                                                          },
+                                                                                          style: TextButton.styleFrom(
+                                                                                            foregroundColor: Colors.red,
+                                                                                          ),
+                                                                                          child: const Text(
+                                                                                            "Hapus",
+                                                                                          ),
                                                                                         ),
-                                                                                      ),
-                                                                                    ],
-                                                                                  ),
-                                                                            );
-                                                                          },
-                                                                        ),
-                                                                      ],
-                                                                    )
-                                                                  : SizedBox(),
-                                                            ],
+                                                                                      ],
+                                                                                    ),
+                                                                              );
+                                                                            },
+                                                                          ),
+                                                                        ],
+                                                                      )
+                                                                    : SizedBox(),
+                                                              ],
+                                                            ),
                                                           ),
                                                         ),
                                                       ),
@@ -796,15 +1054,17 @@ class ScheduleListView extends StatelessWidget {
                                         }).toList(),
                                         Padding(
                                           padding: const EdgeInsets.only(
-                                            top: 8.0,
-                                            bottom: 8.0,
+                                            top: 4.0,
+                                            bottom: 4.0,
                                           ),
                                           child: Divider(
-                                            color: Theme.of(
-                                              context,
-                                            ).dividerColor.withOpacity(0.1),
-                                            indent: 16,
-                                            endIndent: 16,
+                                            color: isDark
+                                                ? Colors.white.withOpacity(0.04)
+                                                : Colors.black.withOpacity(
+                                                    0.04,
+                                                  ),
+                                            indent: 8,
+                                            endIndent: 8,
                                           ),
                                         ),
                                       ],

@@ -25,6 +25,13 @@ class ThemeConfig {
       ),
       unselectedLabelTextStyle: const TextStyle(color: Color(0xFF64748B)),
     ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFFF8FAFC),
+        foregroundColor: Colors.black,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    ),
     canvasColor: const Color(0xFFF8FAFC),
     primaryColor: Colors.black,
     focusColor: Colors.white,
@@ -57,6 +64,13 @@ class ThemeConfig {
         fontWeight: FontWeight.bold,
       ),
       unselectedLabelTextStyle: const TextStyle(color: Colors.white38),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF020617),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
     ),
     canvasColor: const Color(0xFF020617),
     primaryColor: Colors.white,

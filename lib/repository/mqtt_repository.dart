@@ -57,4 +57,14 @@ class MqttRepository {
       print('MQTT Connection failed: $e');
     }
   }
+
+  void triggerRefetchSchedule() {
+    client.publishMessage(
+      "thesis/refetch_schedule",
+      MqttQos.atLeastOnce,
+      MqttClientPayloadBuilder().addString("refetch").payload!,
+    );
+
+    print("Published message to topic thesis/refetch_schedule");
+  }
 }

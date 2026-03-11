@@ -43,20 +43,22 @@ class Dashboard extends StatelessWidget {
                     children: [
                       _buildClassCard(
                         context,
-                        roomName: "HD3",
-                        temp: data["HD3"]?.temperature ?? 0.0,
-                        hours: data["HD3"]?.lampHours.toStringAsFixed(0) ?? "0",
-                        humidity: data["HD3"]?.humidity ?? 0.0,
-                        isOn: data["HD3"]?.status == "ON" ? true : false,
+                        roomName: "HD03",
+                        temp: data["HD03"]?.temperature ?? 0.0,
+                        hours:
+                            data["HD03"]?.lampHours.toStringAsFixed(0) ?? "0",
+                        humidity: data["HD03"]?.humidity ?? 0.0,
+                        isOn: data["HD03"]?.status == "ON" ? true : false,
                         cardColor: cardColor,
                       ),
                       _buildClassCard(
                         context,
-                        roomName: "HD4",
-                        temp: data["HD4"]?.temperature ?? 0.0,
-                        hours: data["HD4"]?.lampHours.toStringAsFixed(0) ?? "0",
-                        humidity: data["HD4"]?.humidity ?? 0.0,
-                        isOn: data["HD4"]?.status == "ON" ? true : false,
+                        roomName: "HD04",
+                        temp: data["HD04"]?.temperature ?? 0.0,
+                        hours:
+                            data["HD04"]?.lampHours.toStringAsFixed(0) ?? "0",
+                        humidity: data["HD04"]?.humidity ?? 0.0,
+                        isOn: data["HD04"]?.status == "ON" ? true : false,
                         cardColor: cardColor,
                       ),
                       _buildClassCard(
@@ -90,6 +92,8 @@ Widget _buildClassCard(
   required Color cardColor,
 }) {
   final double width = MediaQuery.of(context).size.width;
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final statusColor = isOn ? Colors.green : Colors.redAccent;
 
   return InkWell(
     onTap: () {
@@ -108,40 +112,25 @@ Widget _buildClassCard(
         border: Border.all(
           color: isOn
               ? Colors.green.withOpacity(0.5)
-              : Theme.of(context).dividerColor,
-          width: 2,
+              : (isDark ? Colors.white10 : Colors.black.withOpacity(0.06)),
         ),
-        boxShadow: isOn
-            ? [
-                BoxShadow(
-                  color: Colors.green.withOpacity(0.1),
-                  blurRadius: 12,
-                  spreadRadius: 4,
-                ),
-              ]
-            : Theme.of(context).brightness == Brightness.dark
-            ? [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 8,
-                  spreadRadius: 2,
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  blurRadius: 8,
-                  spreadRadius: 2,
-                ),
-              ],
+        boxShadow: [
+          BoxShadow(
+            color: isOn
+                ? Colors.green.withOpacity(0.08)
+                : Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+            blurRadius: 16,
+            spreadRadius: 2,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Nama Kelas & Status
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              const SizedBox(width: 10),
               Text(
                 roomName,
                 style: const TextStyle(
@@ -149,22 +138,58 @@ Widget _buildClassCard(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Icon(
-                Icons.circle,
-                color: isOn ? Colors.green : Colors.red,
-                size: 12,
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.circle, color: statusColor, size: 7),
+                    const SizedBox(width: 5),
+                    Text(
+                      isOn ? "ON" : "OFF",
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          Divider(height: 30, color: Theme.of(context).dividerColor),
-          // Body: Data Utama
+          Divider(
+            height: 24,
+            color: isDark ? Colors.white10 : Colors.black.withOpacity(0.06),
+          ),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _infoRow(Icons.thermostat, "Temp", "${temp}°C"),
-                _infoRow(Icons.timer, "Usage", hours),
-                _infoRow(Icons.auto_graph, "Humidity", "${humidity}%"),
+                _infoRow(
+                  Icons.thermostat_rounded,
+                  "Temp",
+                  "${temp.toStringAsFixed(1)}°C",
+                  const Color.fromARGB(255, 255, 115, 0),
+                ),
+                _infoRow(
+                  Icons.lightbulb_outline_rounded,
+                  "Lamp",
+                  "${hours}h",
+                  Colors.amber,
+                ),
+                _infoRow(
+                  Icons.water_drop_outlined,
+                  "Humidity",
+                  "${humidity.toStringAsFixed(0)}%",
+                  Colors.blueAccent,
+                ),
               ],
             ),
           ),
@@ -174,10 +199,10 @@ Widget _buildClassCard(
   );
 }
 
-Widget _infoRow(IconData icon, String label, String value) {
+Widget _infoRow(IconData icon, String label, String value, Color color) {
   return Row(
     children: [
-      Icon(icon, size: 18, color: Colors.blueAccent),
+      Icon(icon, size: 18, color: color),
       const SizedBox(width: 10),
       Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
       const Spacer(),

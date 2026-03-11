@@ -45,3 +45,7 @@ final class UpdateScheduleEvent extends ScheduleEvent {
     required this.newEndTime,
   });
 }
+
+final class ReplaceScheduleEvent extends ScheduleEvent {}
+
+class RefetchScheduleMqttEvent extends ScheduleEvent {}

@@ -111,65 +111,104 @@ class _ScheduleState extends State<Schedule> {
   }
 
   Widget _uploadFileWidget(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Center(
       child: DottedBorder(
         options: RoundedRectDottedBorderOptions(
-          radius: const Radius.circular(20),
-          color: Theme.of(context).primaryColor.withOpacity(0.6),
-          strokeWidth: 1,
-          dashPattern: const [8, 4],
+          radius: const Radius.circular(24),
+          color: theme.primaryColor.withOpacity(0.3),
+          strokeWidth: 1.5,
+          dashPattern: const [10, 6],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: InkWell(
-            onTap: () async {
-              FilePickerResult? result = await FilePicker.platform.pickFiles(
-                type: FileType.custom,
-                allowedExtensions: ['xlsx'],
-              );
-
-              if (result != null) {
-                context.read<ScheduleBloc>().add(
-                  PickScheduleFileEvent(result.files.first),
+          borderRadius: BorderRadius.circular(24),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () async {
+                FilePickerResult? result = await FilePicker.platform.pickFiles(
+                  type: FileType.custom,
+                  allowedExtensions: ['xlsx'],
                 );
-              }
-            },
-            splashColor: Colors.transparent,
-            hoverColor: Colors.grey.withOpacity(0.3),
-            highlightColor: Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              height: 250,
-              width: 500,
-              child: Center(
+
+                if (result != null) {
+                  context.read<ScheduleBloc>().add(
+                    PickScheduleFileEvent(result.files.first),
+                  );
+                }
+              },
+              splashColor: Colors.transparent,
+              hoverColor: theme.primaryColor.withOpacity(0.05),
+              highlightColor: Colors.transparent,
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                height: 280,
+                width: 480,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.cloud_upload_outlined,
-                      size: 40,
-                      color: Theme.of(context).primaryColor,
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: theme.primaryColor.withOpacity(0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.cloud_upload_outlined,
+                        size: 40,
+                        color: theme.primaryColor,
+                      ),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Upload Jadwal Kuliah',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: theme.primaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Text(
                       'Belum ada jadwal. Klik untuk mengupload file jadwal',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                      style: TextStyle(
+                        color: isDark ? Colors.grey[500] : Colors.grey[600],
+                        fontSize: 14,
+                      ),
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 18),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
+                        horizontal: 14,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white24
-                            : Colors.black12,
+                        color: Colors.green.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.green.withOpacity(0.2),
+                        ),
                       ),
-                      child: const Text(
-                        '.xlsx only',
-                        style: TextStyle(fontSize: 12),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            FontAwesomeIcons.fileExcel,
+                            size: 13,
+                            color: Colors.green,
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            '.xlsx only',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -183,89 +222,142 @@ class _ScheduleState extends State<Schedule> {
   }
 
   Widget _previewFileWidget(BuildContext context, PlatformFile file) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Center(
       child: Container(
-        width: 500,
-        padding: const EdgeInsets.all(24),
+        width: 480,
+        padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
-          color: Theme.of(context).canvasColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.green.withOpacity(0.5), width: 2),
+          color: theme.canvasColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isDark ? Colors.white10 : Colors.black.withOpacity(0.06),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    FontAwesomeIcons.fileExcel,
-                    size: 40,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                FontAwesomeIcons.fileExcel,
+                size: 36,
+                color: Colors.green,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'File Siap Diupload',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: theme.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: theme.primaryColor.withOpacity(0.04),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: theme.primaryColor.withOpacity(0.08)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.insert_drive_file_rounded,
                     color: Colors.green,
+                    size: 20,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        file.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          file.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        '${(file.size / 1024).toStringAsFixed(2)} KB',
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          '${(file.size / 1024).toStringAsFixed(2)} KB',
+                          style: TextStyle(
+                            color: isDark ? Colors.grey[500] : Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      '.xlsx',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.green,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: TextButton(
                     onPressed: () {
                       context.read<ScheduleBloc>().add(
                         ResetFileSelectionEvent(),
                       );
                     },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: const BorderSide(color: Colors.red),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       "Batal",
-                      style: TextStyle(color: Colors.red),
+                      style: TextStyle(
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
+                  flex: 2,
                   child: BlocBuilder<ScheduleBloc, ScheduleState>(
                     builder: (context, state) {
-                      return ElevatedButton(
+                      return ElevatedButton.icon(
                         onPressed: () {
                           (state is UploadScheduleLoading)
                               ? null
@@ -276,24 +368,28 @@ class _ScheduleState extends State<Schedule> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: (state is UploadScheduleLoading)
+                        icon: (state is UploadScheduleLoading)
                             ? const SizedBox(
-                                height: 20,
-                                width: 20,
+                                height: 18,
+                                width: 18,
                                 child: CircularProgressIndicator(
                                   color: Colors.white,
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text(
-                                "Upload Jadwal",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
+                            : const Icon(Icons.cloud_upload_outlined, size: 20),
+                        label: Text(
+                          (state is UploadScheduleLoading)
+                              ? "Mengupload..."
+                              : "Upload Jadwal",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       );
                     },
                   ),

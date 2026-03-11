@@ -173,7 +173,8 @@ class _DetailDashboardState extends State<DetailDashboard> {
                 child: SegmentedButton<ChartMode>(
                   showSelectedIcon: false,
                   style: SegmentedButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
+                    // padding: EdgeInsets.all(10),
+                    visualDensity: VisualDensity.comfortable,
                     selectedForegroundColor: Colors.white,
                     selectedBackgroundColor: lineArrowColor,
                     side: BorderSide(color: Colors.grey.withOpacity(0.2)),

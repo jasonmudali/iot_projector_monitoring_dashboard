@@ -74,7 +74,7 @@ void main() async {
             return MqttBloc(mqttRepository)..add(StartListening());
           },
         ),
-        BlocProvider(create: (context) => ScheduleBloc()),
+        BlocProvider(create: (context) => ScheduleBloc(mqttRepository)),
       ],
       child: const MyApp(),
     ),

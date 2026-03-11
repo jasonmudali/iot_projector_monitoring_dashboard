@@ -14,8 +14,8 @@ class MqttBloc extends Bloc<MqttEvent, MqttState> {
     : super(
         ProjectorState(
           projectorStats: {
-            "HD3": ProjectorModel(id: "HD3"),
-            "HD4": ProjectorModel(id: "HD4"),
+            "HD03": ProjectorModel(id: "HD03"),
+            "HD04": ProjectorModel(id: "HD04"),
             "L1D": ProjectorModel(id: "L1D"),
           },
           temperatureData: {},
