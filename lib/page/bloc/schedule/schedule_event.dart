@@ -5,13 +5,13 @@ sealed class ScheduleEvent {}
 
 // Choose schedule file from device
 final class PickScheduleFileEvent extends ScheduleEvent {
-  PlatformFile file;
+  final PlatformFile file;
   PickScheduleFileEvent(this.file);
 }
 
 // Upload processed schedule from excel to database
 final class UploadScheduleEvent extends ScheduleEvent {
-  PlatformFile file;
+  final PlatformFile file;
   UploadScheduleEvent(this.file);
 }
 
@@ -19,7 +19,11 @@ final class UploadScheduleEvent extends ScheduleEvent {
 final class ResetFileSelectionEvent extends ScheduleEvent {}
 
 // Fetch schedule data from database
-final class LoadScheduleEvent extends ScheduleEvent {}
+final class LoadScheduleEvent extends ScheduleEvent {
+  final DateTime? selectedDate;
+
+  LoadScheduleEvent({this.selectedDate});
+}
 
 final class CalendarDateSelectedEvent extends ScheduleEvent {
   final DateTime selectedDate;

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skripsi_iot_projector/model/schedule_model.dart';
-import 'package:skripsi_iot_projector/page/bloc/mqtt/mqtt_bloc.dart';
 import 'package:skripsi_iot_projector/page/bloc/schedule/schedule_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
@@ -86,7 +85,7 @@ class ScheduleListView extends StatelessWidget {
                 ),
                 icon: const Icon(Icons.swap_horiz_rounded, size: 20),
                 label: const Text(
-                  "Ganti Jadwal",
+                  "Replace Schedule",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 onPressed: () {
@@ -103,7 +102,7 @@ class ScheduleListView extends StatelessWidget {
                           Icon(Icons.swap_horiz_rounded, color: Colors.orange),
                           const SizedBox(width: 10),
                           const Text(
-                            "Ganti Jadwal",
+                            "Replace Schedule",
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -132,7 +131,7 @@ class ScheduleListView extends StatelessWidget {
                               const SizedBox(width: 16),
                               Expanded(
                                 child: Text(
-                                  "Apakah Anda yakin ingin menghapus semua jadwal dan mengunggah jadwal baru? Tindakan ini tidak dapat dibatalkan.",
+                                  "Are you sure you want to delete all schedules and upload a new schedule? This action cannot be undone.",
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: isDark
@@ -156,7 +155,7 @@ class ScheduleListView extends StatelessWidget {
                                 child: TextButton(
                                   onPressed: () => Navigator.pop(context),
                                   child: Text(
-                                    "Batal",
+                                    "Cancel",
                                     style: TextStyle(color: theme.primaryColor),
                                   ),
                                 ),
@@ -182,7 +181,7 @@ class ScheduleListView extends StatelessWidget {
                                     Navigator.pop(context);
                                   },
                                   child: const Text(
-                                    "Ganti Jadwal",
+                                    "Replace Schedule",
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -237,7 +236,7 @@ class ScheduleListView extends StatelessWidget {
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                "Tidak ada jadwal untuk hari ini",
+                                "No classes scheduled for this day",
                                 style: TextStyle(
                                   color: isDark
                                       ? Colors.grey[500]
@@ -325,6 +324,8 @@ class ScheduleListView extends StatelessWidget {
                                           String currentStart =
                                               schedule.startTime;
                                           String currentEnd = schedule.endTime;
+                                          DateTime currentDate =
+                                              schedule.tanggal;
 
                                           return StatefulBuilder(
                                             builder: (context, setElementState) {
@@ -541,7 +542,7 @@ class ScheduleListView extends StatelessWidget {
                                                                                                     width: 10,
                                                                                                   ),
                                                                                                   const Text(
-                                                                                                    "Edit Jam Kuliah",
+                                                                                                    "Edit Class Schedule",
                                                                                                     style: TextStyle(
                                                                                                       fontSize: 20,
                                                                                                       fontWeight: FontWeight.bold,
@@ -582,7 +583,7 @@ class ScheduleListView extends StatelessWidget {
                                                                                                           crossAxisAlignment: CrossAxisAlignment.start,
                                                                                                           children: [
                                                                                                             Text(
-                                                                                                              "MATA KULIAH",
+                                                                                                              "COURSE NAME",
                                                                                                               style: TextStyle(
                                                                                                                 fontSize: 12,
                                                                                                                 color: Colors.grey[600],
@@ -600,7 +601,7 @@ class ScheduleListView extends StatelessWidget {
                                                                                                               height: 8,
                                                                                                             ),
                                                                                                             Text(
-                                                                                                              "RUANGAN",
+                                                                                                              "CLASSROOM",
                                                                                                               style: TextStyle(
                                                                                                                 fontSize: 12,
                                                                                                                 color: Colors.grey[600],
@@ -617,23 +618,141 @@ class ScheduleListView extends StatelessWidget {
                                                                                                           ],
                                                                                                         ),
                                                                                                       ),
-                                                                                                      const Padding(
-                                                                                                        padding: EdgeInsets.symmetric(
-                                                                                                          vertical: 20,
+                                                                                                      const SizedBox(
+                                                                                                        height: 16,
+                                                                                                      ),
+                                                                                                      Text(
+                                                                                                        "Adjust Class Schedule:",
+                                                                                                        style: TextStyle(
+                                                                                                          fontWeight: FontWeight.bold,
+                                                                                                          fontSize: 16,
                                                                                                         ),
-                                                                                                        child: Text(
-                                                                                                          "Sesuaikan Waktu Kuliah:",
-                                                                                                          style: TextStyle(
-                                                                                                            fontWeight: FontWeight.bold,
-                                                                                                            fontSize: 16,
+                                                                                                      ),
+                                                                                                      const SizedBox(
+                                                                                                        height: 8,
+                                                                                                      ),
+                                                                                                      InkWell(
+                                                                                                        splashColor: Colors.transparent,
+                                                                                                        onTap: () async {
+                                                                                                          final DateTime? pickedDate = await showDatePicker(
+                                                                                                            context: context,
+                                                                                                            initialDate: currentDate,
+                                                                                                            firstDate: DateTime(
+                                                                                                              2020,
+                                                                                                            ),
+                                                                                                            lastDate: DateTime(
+                                                                                                              2035,
+                                                                                                            ),
+                                                                                                            builder:
+                                                                                                                (
+                                                                                                                  context,
+                                                                                                                  child,
+                                                                                                                ) {
+                                                                                                                  return Theme(
+                                                                                                                    data: theme.copyWith(
+                                                                                                                      colorScheme: theme.colorScheme.copyWith(
+                                                                                                                        surface: theme.scaffoldBackgroundColor,
+                                                                                                                        primary: theme.primaryColor,
+                                                                                                                        onPrimary: theme.focusColor,
+                                                                                                                      ),
+                                                                                                                      datePickerTheme: DatePickerThemeData(
+                                                                                                                        backgroundColor: theme.scaffoldBackgroundColor,
+                                                                                                                        shape: RoundedRectangleBorder(
+                                                                                                                          borderRadius: BorderRadius.circular(
+                                                                                                                            20,
+                                                                                                                          ),
+                                                                                                                        ),
+                                                                                                                        dayStyle: TextStyle(
+                                                                                                                          fontSize: 12,
+                                                                                                                          color: theme.primaryColor,
+                                                                                                                        ),
+                                                                                                                      ),
+                                                                                                                    ),
+                                                                                                                    child: child!,
+                                                                                                                  );
+                                                                                                                },
+                                                                                                          );
+
+                                                                                                          if (pickedDate !=
+                                                                                                              null) {
+                                                                                                            setState(
+                                                                                                              () {
+                                                                                                                currentDate = pickedDate;
+                                                                                                              },
+                                                                                                            );
+                                                                                                          }
+                                                                                                        },
+                                                                                                        borderRadius: BorderRadius.circular(
+                                                                                                          12,
+                                                                                                        ),
+                                                                                                        child: Container(
+                                                                                                          width: double.infinity,
+                                                                                                          padding: const EdgeInsets.all(
+                                                                                                            14,
+                                                                                                          ),
+                                                                                                          decoration: BoxDecoration(
+                                                                                                            border: Border.all(
+                                                                                                              color: theme.primaryColor.withOpacity(
+                                                                                                                0.2,
+                                                                                                              ),
+                                                                                                            ),
+                                                                                                            borderRadius: BorderRadius.circular(
+                                                                                                              12,
+                                                                                                            ),
+                                                                                                          ),
+                                                                                                          child: Row(
+                                                                                                            children: [
+                                                                                                              Icon(
+                                                                                                                Icons.edit_calendar_rounded,
+                                                                                                                color: theme.primaryColor,
+                                                                                                              ),
+                                                                                                              const SizedBox(
+                                                                                                                width: 10,
+                                                                                                              ),
+                                                                                                              Expanded(
+                                                                                                                child: Column(
+                                                                                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                                                  children: [
+                                                                                                                    Text(
+                                                                                                                      "Class Date",
+                                                                                                                      style: TextStyle(
+                                                                                                                        fontSize: 12,
+                                                                                                                        color: Colors.grey[600],
+                                                                                                                        letterSpacing: 1.1,
+                                                                                                                      ),
+                                                                                                                    ),
+                                                                                                                    const SizedBox(
+                                                                                                                      height: 3,
+                                                                                                                    ),
+                                                                                                                    Text(
+                                                                                                                      DateFormat(
+                                                                                                                        'd MMMM yyyy',
+                                                                                                                      ).format(
+                                                                                                                        currentDate,
+                                                                                                                      ),
+                                                                                                                      style: const TextStyle(
+                                                                                                                        fontWeight: FontWeight.bold,
+                                                                                                                        fontSize: 16,
+                                                                                                                      ),
+                                                                                                                    ),
+                                                                                                                  ],
+                                                                                                                ),
+                                                                                                              ),
+                                                                                                            ],
                                                                                                           ),
                                                                                                         ),
+                                                                                                      ),
+                                                                                                      const SizedBox(
+                                                                                                        height: 16,
                                                                                                       ),
                                                                                                       Row(
                                                                                                         children: [
                                                                                                           // Jam Mulai
                                                                                                           Expanded(
                                                                                                             child: InkWell(
+                                                                                                              borderRadius: BorderRadius.circular(
+                                                                                                                12,
+                                                                                                              ),
                                                                                                               onTap: () async {
                                                                                                                 final TimeOfDay? picked = await showTimePicker(
                                                                                                                   context: context,
@@ -744,7 +863,7 @@ class ScheduleListView extends StatelessWidget {
                                                                                                                 child: Column(
                                                                                                                   children: [
                                                                                                                     const Text(
-                                                                                                                      "Mulai",
+                                                                                                                      "Start",
                                                                                                                       style: TextStyle(
                                                                                                                         fontSize: 12,
                                                                                                                         color: Colors.grey,
@@ -771,6 +890,9 @@ class ScheduleListView extends StatelessWidget {
                                                                                                           // Jam Selesai
                                                                                                           Expanded(
                                                                                                             child: InkWell(
+                                                                                                              borderRadius: BorderRadius.circular(
+                                                                                                                12,
+                                                                                                              ),
                                                                                                               onTap: () async {
                                                                                                                 final TimeOfDay? picked = await showTimePicker(
                                                                                                                   context: context,
@@ -881,7 +1003,7 @@ class ScheduleListView extends StatelessWidget {
                                                                                                                 child: Column(
                                                                                                                   children: [
                                                                                                                     const Text(
-                                                                                                                      "Selesai",
+                                                                                                                      "End",
                                                                                                                       style: TextStyle(
                                                                                                                         fontSize: 12,
                                                                                                                         color: Colors.grey,
@@ -925,7 +1047,7 @@ class ScheduleListView extends StatelessWidget {
                                                                                                             context,
                                                                                                           ),
                                                                                                           child: Text(
-                                                                                                            "Batal",
+                                                                                                            "Cancel",
                                                                                                             style: TextStyle(
                                                                                                               color: theme.primaryColor,
                                                                                                             ),
@@ -959,7 +1081,7 @@ class ScheduleListView extends StatelessWidget {
                                                                                                                 .add(
                                                                                                                   UpdateScheduleEvent(
                                                                                                                     schedule: schedule,
-                                                                                                                    updatedScheduleDate: selectedDay!,
+                                                                                                                    updatedScheduleDate: currentDate,
                                                                                                                     newStartTime: currentStart,
                                                                                                                     newEndTime: currentEnd,
                                                                                                                   ),
@@ -969,7 +1091,7 @@ class ScheduleListView extends StatelessWidget {
                                                                                                             );
                                                                                                           },
                                                                                                           child: Text(
-                                                                                                            "Simpan Jadwal",
+                                                                                                            "Save Schedule",
                                                                                                             style: TextStyle(
                                                                                                               color: theme.focusColor,
                                                                                                               fontWeight: FontWeight.bold,
@@ -1052,21 +1174,22 @@ class ScheduleListView extends StatelessWidget {
                                             },
                                           );
                                         }).toList(),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 4.0,
-                                            bottom: 4.0,
-                                          ),
-                                          child: Divider(
-                                            color: isDark
-                                                ? Colors.white.withOpacity(0.04)
-                                                : Colors.black.withOpacity(
-                                                    0.04,
-                                                  ),
-                                            indent: 8,
-                                            endIndent: 8,
-                                          ),
-                                        ),
+                                        index == groupedSchedules.length - 1
+                                            ? SizedBox()
+                                            : Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                  vertical: 4.0,
+                                                ),
+                                                child: Divider(
+                                                  color: isDark
+                                                      ? Colors.white
+                                                            .withOpacity(0.04)
+                                                      : Colors.black
+                                                            .withOpacity(0.04),
+                                                  indent: 8,
+                                                  endIndent: 8,
+                                                ),
+                                              ),
                                       ],
                                     ),
                                   ),

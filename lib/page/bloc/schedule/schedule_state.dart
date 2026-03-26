@@ -17,12 +17,14 @@ final class UploadScheduleLoading extends ScheduleState {
 
 // Displaying schedule to calendar
 final class ScheduleLoaded extends ScheduleState {
-  List<ScheduleModel> wholeSchedule;
+  final List<ScheduleModel> wholeSchedule;
+  final DateTime selectedDate;
   final List<ScheduleModel> selectedDaySchedule;
   final Map<String, List<ScheduleModel>> groupedTodaySchedule;
 
   ScheduleLoaded(
     this.wholeSchedule,
+    this.selectedDate,
     this.selectedDaySchedule,
     this.groupedTodaySchedule,
   );
@@ -47,11 +49,13 @@ final class SelectCalendarDateLoading extends ScheduleState {
 // Loaded schedule data after selecting date on calendar
 final class SelectCalendarDateLoaded extends ScheduleState {
   final List<ScheduleModel> wholeSchedule;
+  final DateTime selectedDate;
   final List<ScheduleModel> selectedDaySchedule;
   final Map<String, List<ScheduleModel>> groupedTodaySchedule;
 
   SelectCalendarDateLoaded(
     this.wholeSchedule,
+    this.selectedDate,
     this.selectedDaySchedule,
     this.groupedTodaySchedule,
   );

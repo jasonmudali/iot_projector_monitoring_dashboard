@@ -77,7 +77,7 @@ class ThemeConfig {
     focusColor: Colors.black,
     dividerColor: Colors.white10,
     progressIndicatorTheme: const ProgressIndicatorThemeData(
-      color: Color(0xFF60A5FA),
+      color: Colors.white,
     ),
   );
 }

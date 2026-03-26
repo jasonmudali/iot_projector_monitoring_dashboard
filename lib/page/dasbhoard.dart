@@ -15,69 +15,73 @@ class Dashboard extends StatelessWidget {
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isDesktop = screenWidth >= 600;
 
-    return Column(
-      crossAxisAlignment: isDesktop
-          ? CrossAxisAlignment.start
-          : CrossAxisAlignment.center,
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            'Projector Monitoring Dashboard',
-            style: Theme.of(context).textTheme.displayMedium,
-          ),
-        ),
-        SizedBox(height: 20),
-        Expanded(
-          child: SingleChildScrollView(
-            child: BlocBuilder<MqttBloc, MqttState>(
-              builder: (context, state) {
-                final data = (state as ProjectorState).projectorStats;
-                return Padding(
-                  padding: isDesktop
-                      ? EdgeInsets.zero
-                      : const EdgeInsets.only(right: 20),
-                  child: Wrap(
-                    spacing: 20,
-                    runSpacing: 20,
-                    children: [
-                      _buildClassCard(
-                        context,
-                        roomName: "HD03",
-                        temp: data["HD03"]?.temperature ?? 0.0,
-                        hours:
-                            data["HD03"]?.lampHours.toStringAsFixed(0) ?? "0",
-                        humidity: data["HD03"]?.humidity ?? 0.0,
-                        isOn: data["HD03"]?.status == "ON" ? true : false,
-                        cardColor: cardColor,
-                      ),
-                      _buildClassCard(
-                        context,
-                        roomName: "HD04",
-                        temp: data["HD04"]?.temperature ?? 0.0,
-                        hours:
-                            data["HD04"]?.lampHours.toStringAsFixed(0) ?? "0",
-                        humidity: data["HD04"]?.humidity ?? 0.0,
-                        isOn: data["HD04"]?.status == "ON" ? true : false,
-                        cardColor: cardColor,
-                      ),
-                      _buildClassCard(
-                        context,
-                        roomName: "L1D",
-                        temp: data["L1D"]?.temperature ?? 0.0,
-                        hours: data["L1D"]?.lampHours.toStringAsFixed(0) ?? "0",
-                        humidity: data["L1D"]?.humidity ?? 0.0,
-                        isOn: data["L1D"]?.status == "ON" ? true : false,
-                        cardColor: cardColor,
-                      ),
-                    ],
-                  ),
-                );
-              },
+    return Padding(
+      padding: const EdgeInsets.all(18.0),
+      child: Column(
+        crossAxisAlignment: isDesktop
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.center,
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Projector Monitoring Dashboard',
+              style: Theme.of(context).textTheme.displayMedium,
             ),
           ),
-        ),
-      ],
+          SizedBox(height: 20),
+          Expanded(
+            child: SingleChildScrollView(
+              child: BlocBuilder<MqttBloc, MqttState>(
+                builder: (context, state) {
+                  final data = (state as ProjectorState).projectorStats;
+                  return Padding(
+                    padding: isDesktop
+                        ? EdgeInsets.zero
+                        : const EdgeInsets.only(right: 20),
+                    child: Wrap(
+                      spacing: 20,
+                      runSpacing: 20,
+                      children: [
+                        _buildClassCard(
+                          context,
+                          roomName: "HD03",
+                          temp: data["HD03"]?.temperature ?? 0.0,
+                          hours:
+                              data["HD03"]?.lampHours.toStringAsFixed(0) ?? "0",
+                          humidity: data["HD03"]?.humidity ?? 0.0,
+                          isOn: data["HD03"]?.status == "ON" ? true : false,
+                          cardColor: cardColor,
+                        ),
+                        _buildClassCard(
+                          context,
+                          roomName: "HD04",
+                          temp: data["HD04"]?.temperature ?? 0.0,
+                          hours:
+                              data["HD04"]?.lampHours.toStringAsFixed(0) ?? "0",
+                          humidity: data["HD04"]?.humidity ?? 0.0,
+                          isOn: data["HD04"]?.status == "ON" ? true : false,
+                          cardColor: cardColor,
+                        ),
+                        _buildClassCard(
+                          context,
+                          roomName: "L1D",
+                          temp: data["L1D"]?.temperature ?? 0.0,
+                          hours:
+                              data["L1D"]?.lampHours.toStringAsFixed(0) ?? "0",
+                          humidity: data["L1D"]?.humidity ?? 0.0,
+                          isOn: data["L1D"]?.status == "ON" ? true : false,
+                          cardColor: cardColor,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -101,6 +105,7 @@ Widget _buildClassCard(
     },
     hoverColor: Theme.of(context).hoverColor,
     splashColor: Colors.transparent,
+    highlightColor: Colors.transparent,
     borderRadius: BorderRadius.circular(20),
     child: Ink(
       width: width < 600 ? 350 : 300,
@@ -113,13 +118,14 @@ Widget _buildClassCard(
           color: isOn
               ? Colors.green.withOpacity(0.5)
               : (isDark ? Colors.white10 : Colors.black.withOpacity(0.06)),
+          width: isOn ? 1.7 : 1.5,
         ),
         boxShadow: [
           BoxShadow(
             color: isOn
                 ? Colors.green.withOpacity(0.08)
-                : Colors.black.withOpacity(isDark ? 0.3 : 0.08),
-            blurRadius: 16,
+                : Colors.black.withOpacity(isDark ? 0.1 : 0.08),
+            blurRadius: 12,
             spreadRadius: 2,
             offset: const Offset(0, 4),
           ),

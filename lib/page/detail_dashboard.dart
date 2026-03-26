@@ -15,9 +15,26 @@ class DetailDashboard extends StatefulWidget {
   State<DetailDashboard> createState() => _DetailDashboardState();
 }
 
-class _DetailDashboardState extends State<DetailDashboard> {
+class _DetailDashboardState extends State<DetailDashboard>
+    with TickerProviderStateMixin {
   ChartMode selectedModeTemp = ChartMode.live;
   ChartMode selectedModeHumid = ChartMode.live;
+  late AnimationController _statusAnimController;
+
+  @override
+  void initState() {
+    super.initState();
+    _statusAnimController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _statusAnimController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,77 +46,145 @@ class _DetailDashboardState extends State<DetailDashboard> {
     List<FlSpot> humidityData = [];
     int xValue = 0;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+    return Material(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
+          ),
+          title: Text(
+            widget.roomName,
+            style: Theme.of(context).textTheme.displayMedium,
+          ),
         ),
-        title: Text(
-          widget.roomName,
-          style: Theme.of(context).textTheme.displayMedium,
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Real-time Monitoring',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(color: Colors.grey),
-            ),
-            const SizedBox(height: 24),
-            BlocBuilder<MqttBloc, MqttState>(
-              builder: (context, state) {
-                final data = (state as ProjectorState).projectorStats;
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Real-time Monitoring',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium?.copyWith(color: Colors.grey),
+                  ),
+                  BlocBuilder<MqttBloc, MqttState>(
+                    builder: (context, state) {
+                      final data = (state as ProjectorState).projectorStats;
+                      final isOn = data[widget.roomName]?.status == "ON"
+                          ? true
+                          : false;
+                      final statusColor = isOn
+                          ? Colors.green
+                          : Colors.redAccent;
 
-                return Wrap(
-                  spacing: 20,
-                  runSpacing: 20,
-                  children: [
-                    _buildChartCard(
-                      context,
-                      icon: Icons.thermostat,
-                      title: "Temperature",
-                      value:
-                          "${data[widget.roomName]?.temperature.toStringAsFixed(1) ?? "0"}",
-                      unit: "°C",
-                      lineArrowColor: Colors.orange,
-                      cardColor: cardColor,
-                      chartData: state.temperatureData[widget.roomName] ?? [],
-                      timeData: state.timeData[widget.roomName] ?? [],
-                      selectedMode: selectedModeTemp,
-                      onModeChanged: (newMode) {
-                        setState(() => selectedModeTemp = newMode);
-                      },
-                    ),
-                    _buildChartCard(
-                      context,
-                      icon: Icons.water_drop,
-                      title: "Humidity",
-                      value:
-                          "${data[widget.roomName]?.humidity.toStringAsFixed(1) ?? "0"}",
-                      unit: "%",
-                      lineArrowColor: Colors.blue,
-                      cardColor: cardColor,
-                      chartData: state.humidityData[widget.roomName] ?? [],
-                      timeData: state.timeData[widget.roomName] ?? [],
-                      selectedMode: selectedModeHumid,
-                      onModeChanged: (newMode) {
-                        setState(() => selectedModeHumid = newMode);
-                      },
-                    ),
-                  ],
-                );
-              },
-            ),
-          ],
+                      return ScaleTransition(
+                        scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                          CurvedAnimation(
+                            parent: _statusAnimController,
+                            curve: Curves.easeInOut,
+                          ),
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: statusColor, width: 1.5),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ScaleTransition(
+                                scale: Tween<double>(begin: 0.6, end: 1.0)
+                                    .animate(
+                                      CurvedAnimation(
+                                        parent: _statusAnimController,
+                                        curve: Curves.elasticOut,
+                                      ),
+                                    ),
+                                child: Icon(
+                                  Icons.circle,
+                                  color: statusColor,
+                                  size: 8,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isOn ? "ON" : "OFF",
+                                style: TextStyle(
+                                  color: statusColor,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              BlocBuilder<MqttBloc, MqttState>(
+                builder: (context, state) {
+                  final data = (state as ProjectorState).projectorStats;
+
+                  return Wrap(
+                    spacing: 20,
+                    runSpacing: 20,
+                    children: [
+                      _buildChartCard(
+                        context,
+                        icon: Icons.thermostat,
+                        title: "Temperature",
+                        value:
+                            "${data[widget.roomName]?.temperature.toStringAsFixed(1) ?? "0"}",
+                        unit: "°C",
+                        lineArrowColor: Colors.orange,
+                        cardColor: cardColor,
+                        chartData: state.temperatureData[widget.roomName] ?? [],
+                        timeData: state.timeData[widget.roomName] ?? [],
+                        selectedMode: selectedModeTemp,
+                        onModeChanged: (newMode) {
+                          setState(() => selectedModeTemp = newMode);
+                        },
+                      ),
+                      _buildChartCard(
+                        context,
+                        icon: Icons.water_drop,
+                        title: "Humidity",
+                        value:
+                            "${data[widget.roomName]?.humidity.toStringAsFixed(1) ?? "0"}",
+                        unit: "%",
+                        lineArrowColor: Colors.blue,
+                        cardColor: cardColor,
+                        chartData: state.humidityData[widget.roomName] ?? [],
+                        timeData: state.timeData[widget.roomName] ?? [],
+                        selectedMode: selectedModeHumid,
+                        onModeChanged: (newMode) {
+                          setState(() => selectedModeHumid = newMode);
+                        },
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

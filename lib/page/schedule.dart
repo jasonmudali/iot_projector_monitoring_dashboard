@@ -28,7 +28,9 @@ class _ScheduleState extends State<Schedule> {
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
-    context.read<ScheduleBloc>().add(LoadScheduleEvent());
+    context.read<ScheduleBloc>().add(
+      LoadScheduleEvent(selectedDate: _selectedDay),
+    );
   }
 
   String _getHariName(int weekday) {
@@ -77,6 +79,11 @@ class _ScheduleState extends State<Schedule> {
               : (state is SelectCalendarDateLoaded)
               ? state.groupedTodaySchedule
               : {};
+          final DateTime activeSelectedDay = (state is ScheduleLoaded)
+              ? state.selectedDate
+              : (state is SelectCalendarDateLoaded)
+              ? state.selectedDate
+              : (_selectedDay ?? _focusedDay);
 
           return Row(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -86,13 +93,15 @@ class _ScheduleState extends State<Schedule> {
                 context,
                 wholeSchedule: wholeSchedule,
                 selectedDaySchedule: selectedDaySchedule,
+                selectedDay: activeSelectedDay,
+                focusedDay: activeSelectedDay,
               ),
               SizedBox(width: 24),
               Expanded(
                 child: ScheduleListView(
                   scheduleForSelectedDay: selectedDaySchedule,
                   groupedSchedules: groupedTodaySchedule,
-                  selectedDay: _selectedDay,
+                  selectedDay: activeSelectedDay,
                 ),
               ),
             ],
@@ -406,13 +415,15 @@ class _ScheduleState extends State<Schedule> {
     BuildContext context, {
     required List<ScheduleModel> wholeSchedule,
     required List<ScheduleModel> selectedDaySchedule,
+    required DateTime selectedDay,
+    required DateTime focusedDay,
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: 300,
-      height: 380,
+      height: 385,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.canvasColor,
@@ -433,7 +444,7 @@ class _ScheduleState extends State<Schedule> {
         sixWeekMonthsEnforced: false,
         firstDay: DateTime.utc(2020, 1, 1),
         lastDay: DateTime.utc(2030, 12, 31),
-        focusedDay: _focusedDay,
+        focusedDay: focusedDay,
         calendarFormat: _calendarFormat,
         eventLoader: (day) {
           return wholeSchedule
@@ -444,7 +455,7 @@ class _ScheduleState extends State<Schedule> {
               )
               .toList();
         },
-        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+        selectedDayPredicate: (day) => isSameDay(selectedDay, day),
         onDaySelected: (selectedDay, focusedDay) {
           setState(() {
             _selectedDay = selectedDay;

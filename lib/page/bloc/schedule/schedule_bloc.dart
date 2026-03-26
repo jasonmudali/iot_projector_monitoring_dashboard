@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:meta/meta.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:excel/excel.dart';
-import 'package:skripsi_iot_projector/model/update_schedule_model.dart';
 import 'package:skripsi_iot_projector/repository/mqtt_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:skripsi_iot_projector/model/schedule_model.dart';
@@ -97,9 +96,11 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
       try {
         final result = await supabase.from('tbl_jadwalkelas').select();
 
-        if (result == null || (result is List && result.isEmpty)) {
+        if (result.isEmpty) {
           emit(ScheduleInitial());
         } else {
+          final targetDate = event.selectedDate ?? DateTime.now();
+
           List<ScheduleModel> wholeSchedule = (result as List)
               .map((json) => ScheduleModel.fromJson(json))
               .toList();
@@ -108,7 +109,7 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
               .where(
                 (s) =>
                     DateFormat('yyyy-MM-dd').format(s.tanggal) ==
-                    DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                    DateFormat('yyyy-MM-dd').format(targetDate),
               )
               .toList();
 
@@ -126,7 +127,12 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
           };
 
           emit(
-            ScheduleLoaded(wholeSchedule, getTodaySchedule, sortedGroupedToday),
+            ScheduleLoaded(
+              wholeSchedule,
+              targetDate,
+              getTodaySchedule,
+              sortedGroupedToday,
+            ),
           );
         }
       } catch (e) {
@@ -156,6 +162,7 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
       emit(
         SelectCalendarDateLoaded(
           event.wholeSchedule,
+          event.selectedDate,
           event.scheduleForSelectedDay,
           sortedGroupedToday,
         ),
@@ -168,8 +175,13 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
         final result = await supabase
             .from('tbl_jadwalkelas')
             .update({
-              // 'hari': DateFormat('EEEE', 'id_ID').format(event.updatedScheduleDate),
-              // 'tanggal': DateFormat('yyyy-MM-dd').format(event.updatedScheduleDate),
+              'hari': DateFormat(
+                'EEEE',
+                'id_ID',
+              ).format(event.updatedScheduleDate),
+              'tanggal': DateFormat(
+                'yyyy-MM-dd',
+              ).format(event.updatedScheduleDate),
               'start_time': event.newStartTime,
               'end_time': event.newEndTime,
             })
@@ -177,7 +189,7 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
             .select();
         if (result.isNotEmpty) {
           print("Schedule updated successfully: $result");
-          add(LoadScheduleEvent());
+          add(LoadScheduleEvent(selectedDate: event.updatedScheduleDate));
         } else {
           print("No schedule was updated.");
         }

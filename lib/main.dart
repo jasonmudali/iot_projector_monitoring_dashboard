@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:skripsi_iot_projector/page/detail_dashboard.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -64,6 +65,9 @@ void main() async {
 
   final mqttRepository = MqttRepository();
   await mqttRepository.initializeMqtt();
+
+  await initializeDateFormatting('id_ID', null);
+  GoRouter.optionURLReflectsImperativeAPIs = true;
 
   runApp(
     MultiBlocProvider(
