@@ -103,7 +103,6 @@ Widget _buildClassCard(
       final lampState = context.read<LampusageHoursCubit>().state;
       int currentHours = 0;
 
-      // 2. Extract the specific hours for this room if the state is loaded
       if (lampState is LampUsageHoursLoaded) {
         final projectorData = lampState.hoursData.firstWhere(
           (item) => item.classroom == roomName,

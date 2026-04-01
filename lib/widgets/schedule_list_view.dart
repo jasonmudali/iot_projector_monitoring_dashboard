@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:skripsi_iot_projector/model/lampusage_hours_model.dart';
 import 'package:skripsi_iot_projector/model/schedule_model.dart';
+import 'package:skripsi_iot_projector/page/bloc/cubit/lampusage_hours_cubit.dart';
 import 'package:skripsi_iot_projector/page/bloc/schedule/schedule_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
@@ -364,9 +366,42 @@ class ScheduleListView extends StatelessWidget {
                                                         clipBehavior:
                                                             Clip.antiAlias,
                                                         child: InkWell(
-                                                          onTap: () => context.push(
-                                                            '/dashboard/detail/${schedule.classroom}',
-                                                          ),
+                                                          onTap: () {
+                                                            final lampState =
+                                                                context
+                                                                    .read<
+                                                                      LampusageHoursCubit
+                                                                    >()
+                                                                    .state;
+                                                            int currentHours =
+                                                                0;
+
+                                                            if (lampState
+                                                                is LampUsageHoursLoaded) {
+                                                              final projectorData = lampState.hoursData.firstWhere(
+                                                                (item) =>
+                                                                    item.classroom ==
+                                                                    schedule
+                                                                        .classroom,
+                                                                orElse: () =>
+                                                                    LampUsageHoursModel(
+                                                                      classroom:
+                                                                          schedule
+                                                                              .classroom,
+                                                                      hours: 0,
+                                                                    ),
+                                                              );
+                                                              currentHours =
+                                                                  projectorData
+                                                                      .hours;
+                                                            }
+
+                                                            context.push(
+                                                              '/dashboard/detail/${schedule.classroom}',
+                                                              extra:
+                                                                  currentHours,
+                                                            );
+                                                          },
                                                           hoverColor:
                                                               theme.hoverColor,
                                                           splashColor: Colors

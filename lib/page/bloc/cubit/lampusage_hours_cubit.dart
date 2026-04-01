@@ -22,9 +22,6 @@ class LampusageHoursCubit extends Cubit<LampusageHoursState> {
         lampUsageList = (result as List)
             .map((json) => LampUsageHoursModel.fromJson(json))
             .toList();
-        print(
-          "Fetched lamp usage hours: ${lampUsageList[0].classroom}, ${lampUsageList[0].hours}",
-        );
       }
 
       emit(LampUsageHoursLoaded(lampUsageList));

@@ -94,7 +94,11 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     on<LoadScheduleEvent>((event, emit) async {
       emit(ScheduleLoading());
       try {
-        final result = await supabase.from('tbl_jadwalkelas').select();
+        final result = await supabase
+            .from('tbl_jadwalkelas')
+            .select()
+            .order('start_time', ascending: true)
+            .order('classroom', ascending: true);
 
         if (result.isEmpty) {
           emit(ScheduleInitial());
