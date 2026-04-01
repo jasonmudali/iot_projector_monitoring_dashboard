@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:skripsi_iot_projector/model/sidebar_item.dart';
 import 'package:skripsi_iot_projector/page/bloc/schedule/schedule_bloc.dart';
 import 'package:skripsi_iot_projector/page/bloc/theme/theme_bloc.dart';
-import 'package:skripsi_iot_projector/page/dasbhoard.dart';
+import 'package:skripsi_iot_projector/page/dashboard.dart';
 import 'package:skripsi_iot_projector/widgets/sidebar.dart';
 
 class HomePage extends StatelessWidget {

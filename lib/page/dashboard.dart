@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:skripsi_iot_projector/model/lampusage_hours_model.dart';
+import 'package:skripsi_iot_projector/page/bloc/cubit/lampusage_hours_cubit.dart';
 import 'package:skripsi_iot_projector/page/bloc/mqtt/mqtt_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -47,8 +49,7 @@ class Dashboard extends StatelessWidget {
                           context,
                           roomName: "HD03",
                           temp: data["HD03"]?.temperature ?? 0.0,
-                          hours:
-                              data["HD03"]?.lampHours.toStringAsFixed(0) ?? "0",
+                          hours: "0",
                           humidity: data["HD03"]?.humidity ?? 0.0,
                           isOn: data["HD03"]?.status == "ON" ? true : false,
                           cardColor: cardColor,
@@ -57,8 +58,7 @@ class Dashboard extends StatelessWidget {
                           context,
                           roomName: "HD04",
                           temp: data["HD04"]?.temperature ?? 0.0,
-                          hours:
-                              data["HD04"]?.lampHours.toStringAsFixed(0) ?? "0",
+                          hours: "0",
                           humidity: data["HD04"]?.humidity ?? 0.0,
                           isOn: data["HD04"]?.status == "ON" ? true : false,
                           cardColor: cardColor,
@@ -67,8 +67,7 @@ class Dashboard extends StatelessWidget {
                           context,
                           roomName: "L1D",
                           temp: data["L1D"]?.temperature ?? 0.0,
-                          hours:
-                              data["L1D"]?.lampHours.toStringAsFixed(0) ?? "0",
+                          hours: "0",
                           humidity: data["L1D"]?.humidity ?? 0.0,
                           isOn: data["L1D"]?.status == "ON" ? true : false,
                           cardColor: cardColor,
@@ -101,7 +100,19 @@ Widget _buildClassCard(
 
   return InkWell(
     onTap: () {
-      context.push('/dashboard/detail/$roomName');
+      final lampState = context.read<LampusageHoursCubit>().state;
+      int currentHours = 0;
+
+      // 2. Extract the specific hours for this room if the state is loaded
+      if (lampState is LampUsageHoursLoaded) {
+        final projectorData = lampState.hoursData.firstWhere(
+          (item) => item.classroom == roomName,
+          orElse: () => LampUsageHoursModel(classroom: roomName, hours: 0),
+        );
+        currentHours = projectorData.hours;
+      }
+
+      context.push('/dashboard/detail/$roomName', extra: currentHours);
     },
     hoverColor: Theme.of(context).hoverColor,
     splashColor: Colors.transparent,
@@ -189,6 +200,7 @@ Widget _buildClassCard(
                   "Lamp",
                   "${hours}h",
                   Colors.amber,
+                  roomName,
                 ),
                 _infoRow(
                   Icons.water_drop_outlined,
@@ -205,14 +217,43 @@ Widget _buildClassCard(
   );
 }
 
-Widget _infoRow(IconData icon, String label, String value, Color color) {
+Widget _infoRow(
+  IconData icon,
+  String label,
+  String value,
+  Color color, [
+  String? roomName,
+]) {
   return Row(
     children: [
       Icon(icon, size: 18, color: color),
       const SizedBox(width: 10),
       Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
       const Spacer(),
-      Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+      label == "Lamp"
+          ? BlocBuilder<LampusageHoursCubit, LampusageHoursState>(
+              builder: (context, state) {
+                if (state is LampusageHoursInitial) {
+                  return const SizedBox(
+                    width: 15,
+                    height: 15,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  );
+                } else if (state is LampUsageHoursLoaded) {
+                  final projectorData = state.hoursData.firstWhere(
+                    (item) => item.classroom == roomName,
+                    orElse: () =>
+                        LampUsageHoursModel(classroom: roomName!, hours: 0),
+                  );
+                  return Text(
+                    '${projectorData.hours}h',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  );
+                }
+                return const Text('Loading...');
+              },
+            )
+          : Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
     ],
   );
 }

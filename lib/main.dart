@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:skripsi_iot_projector/page/bloc/cubit/lampusage_hours_cubit.dart';
 import 'package:skripsi_iot_projector/page/bloc/mqtt/mqtt_bloc.dart';
 import 'package:skripsi_iot_projector/page/bloc/schedule/schedule_bloc.dart';
 import 'package:skripsi_iot_projector/page/bloc/theme/theme_bloc.dart';
-import 'package:skripsi_iot_projector/page/dasbhoard.dart';
+import 'package:skripsi_iot_projector/page/dashboard.dart';
 import 'package:skripsi_iot_projector/page/home.dart';
 import 'package:skripsi_iot_projector/page/schedule.dart';
 import 'package:skripsi_iot_projector/repository/mqtt_repository.dart';
@@ -37,7 +38,11 @@ final _router = GoRouter(
               path: '/dashboard/detail/:roomName',
               builder: (context, state) {
                 final roomName = state.pathParameters['roomName']!;
-                return DetailDashboard(roomName: roomName);
+                final lampHours = state.extra as int;
+                return DetailDashboard(
+                  roomName: roomName,
+                  lampHours: lampHours,
+                );
               },
             ),
           ],
@@ -79,6 +84,9 @@ void main() async {
           },
         ),
         BlocProvider(create: (context) => ScheduleBloc(mqttRepository)),
+        BlocProvider(
+          create: (context) => LampusageHoursCubit()..fetchLampUsageHours(),
+        ),
       ],
       child: const MyApp(),
     ),

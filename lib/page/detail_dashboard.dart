@@ -8,8 +8,13 @@ enum ChartMode { live, hour, day }
 
 class DetailDashboard extends StatefulWidget {
   final String roomName;
+  final int lampHours;
 
-  const DetailDashboard({super.key, required this.roomName});
+  const DetailDashboard({
+    super.key,
+    required this.roomName,
+    required this.lampHours,
+  });
 
   @override
   State<DetailDashboard> createState() => _DetailDashboardState();
@@ -25,9 +30,9 @@ class _DetailDashboardState extends State<DetailDashboard>
   void initState() {
     super.initState();
     _statusAnimController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
-    )..repeat();
+    )..repeat(reverse: true);
   }
 
   @override
@@ -178,6 +183,107 @@ class _DetailDashboardState extends State<DetailDashboard>
                         onModeChanged: (newMode) {
                           setState(() => selectedModeHumid = newMode);
                         },
+                      ),
+                      Container(
+                        width: 400,
+                        height: 330,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: cardColor,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Lamp Usage",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color:
+                                    Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.grey
+                                    : Colors.black.withOpacity(0.8),
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            Expanded(
+                              child: PieChart(
+                                PieChartData(
+                                  startDegreeOffset: 270,
+                                  sectionsSpace: 2,
+                                  centerSpaceRadius: 50,
+                                  sections: [
+                                    PieChartSectionData(
+                                      value: widget.lampHours.toDouble(),
+                                      color: Colors.blue,
+                                      radius: 20,
+                                      showTitle: false,
+                                    ),
+                                    PieChartSectionData(
+                                      value: (5000 - widget.lampHours)
+                                          .toDouble(),
+                                      color: Colors.grey.withOpacity(0.2),
+                                      radius: 20,
+                                      showTitle: false,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.circle,
+                                      color: Colors.blue,
+                                      size: 10,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      "Used: ${widget.lampHours}h",
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.color,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(width: 20),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.circle,
+                                      color: Colors.grey.withOpacity(0.2),
+                                      size: 10,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      "Available: ${(5000 - widget.lampHours)}h",
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.color,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   );

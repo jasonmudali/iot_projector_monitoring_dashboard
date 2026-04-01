@@ -1109,56 +1109,56 @@ class ScheduleListView extends StatelessWidget {
                                                                               );
                                                                             },
                                                                           ),
-                                                                          IconButton(
-                                                                            icon: const Icon(
-                                                                              Icons.delete_outline,
-                                                                              color: Colors.redAccent,
-                                                                              size: 20,
-                                                                            ),
-                                                                            onPressed: () {
-                                                                              showDialog(
-                                                                                context: context,
-                                                                                builder:
-                                                                                    (
-                                                                                      context,
-                                                                                    ) => AlertDialog(
-                                                                                      title: const Text(
-                                                                                        "Hapus Jadwal?",
-                                                                                      ),
-                                                                                      content: Text(
-                                                                                        "Apakah Anda yakin ingin menghapus jadwal ${schedule.mataKuliah}? Tindakan ini dilakukan jika Dosen berhalangan hadir.",
-                                                                                      ),
-                                                                                      actions: [
-                                                                                        TextButton(
-                                                                                          onPressed: () => Navigator.pop(
-                                                                                            context,
-                                                                                          ),
-                                                                                          style: TextButton.styleFrom(
-                                                                                            foregroundColor: Colors.black,
-                                                                                          ),
-                                                                                          child: const Text(
-                                                                                            "Batal",
-                                                                                          ),
-                                                                                        ),
-                                                                                        TextButton(
-                                                                                          onPressed: () {
-                                                                                            // BlocProvider.of<ScheduleBloc>(context).add(DeleteScheduleEvent(schedule.id));
-                                                                                            Navigator.pop(
-                                                                                              context,
-                                                                                            );
-                                                                                          },
-                                                                                          style: TextButton.styleFrom(
-                                                                                            foregroundColor: Colors.red,
-                                                                                          ),
-                                                                                          child: const Text(
-                                                                                            "Hapus",
-                                                                                          ),
-                                                                                        ),
-                                                                                      ],
-                                                                                    ),
-                                                                              );
-                                                                            },
-                                                                          ),
+                                                                          // IconButton(
+                                                                          //   icon: const Icon(
+                                                                          //     Icons.delete_outline,
+                                                                          //     color: Colors.redAccent,
+                                                                          //     size: 20,
+                                                                          //   ),
+                                                                          //   onPressed: () {
+                                                                          //     showDialog(
+                                                                          //       context: context,
+                                                                          //       builder:
+                                                                          //           (
+                                                                          //             context,
+                                                                          //           ) => AlertDialog(
+                                                                          //             title: const Text(
+                                                                          //               "Hapus Jadwal?",
+                                                                          //             ),
+                                                                          //             content: Text(
+                                                                          //               "Apakah Anda yakin ingin menghapus jadwal ${schedule.mataKuliah}? Tindakan ini dilakukan jika Dosen berhalangan hadir.",
+                                                                          //             ),
+                                                                          //             actions: [
+                                                                          //               TextButton(
+                                                                          //                 onPressed: () => Navigator.pop(
+                                                                          //                   context,
+                                                                          //                 ),
+                                                                          //                 style: TextButton.styleFrom(
+                                                                          //                   foregroundColor: Colors.black,
+                                                                          //                 ),
+                                                                          //                 child: const Text(
+                                                                          //                   "Batal",
+                                                                          //                 ),
+                                                                          //               ),
+                                                                          //               TextButton(
+                                                                          //                 onPressed: () {
+                                                                          //                   // BlocProvider.of<ScheduleBloc>(context).add(DeleteScheduleEvent(schedule.id));
+                                                                          //                   Navigator.pop(
+                                                                          //                     context,
+                                                                          //                   );
+                                                                          //                 },
+                                                                          //                 style: TextButton.styleFrom(
+                                                                          //                   foregroundColor: Colors.red,
+                                                                          //                 ),
+                                                                          //                 child: const Text(
+                                                                          //                   "Hapus",
+                                                                          //                 ),
+                                                                          //               ),
+                                                                          //             ],
+                                                                          //           ),
+                                                                          //     );
+                                                                          //   },
+                                                                          // ),
                                                                         ],
                                                                       )
                                                                     : SizedBox(),
