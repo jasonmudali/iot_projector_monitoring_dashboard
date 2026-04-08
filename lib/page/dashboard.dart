@@ -12,7 +12,7 @@ class Dashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardColor = Theme.of(context).canvasColor;
 
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isDesktop = screenWidth >= 600;
@@ -96,7 +96,7 @@ Widget _buildClassCard(
 }) {
   final double width = MediaQuery.of(context).size.width;
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  final statusColor = isOn ? Colors.green : Colors.redAccent;
+  final statusColor = isOn ? Colors.green : Colors.grey;
 
   return InkWell(
     onTap: () {
@@ -124,22 +124,6 @@ Widget _buildClassCard(
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isOn
-              ? Colors.green.withOpacity(0.5)
-              : (isDark ? Colors.white10 : Colors.black.withOpacity(0.06)),
-          width: isOn ? 1.7 : 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isOn
-                ? Colors.green.withOpacity(0.08)
-                : Colors.black.withOpacity(isDark ? 0.1 : 0.08),
-            blurRadius: 12,
-            spreadRadius: 2,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,7 +142,7 @@ Widget _buildClassCard(
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
+                  color: statusColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(

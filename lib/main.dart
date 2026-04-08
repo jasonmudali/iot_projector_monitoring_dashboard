@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skripsi_iot_projector/page/bloc/cubit/lampusage_hours_cubit.dart';
+import 'package:skripsi_iot_projector/page/bloc/historical_data/historical_data_bloc.dart';
 import 'package:skripsi_iot_projector/page/bloc/mqtt/mqtt_bloc.dart';
 import 'package:skripsi_iot_projector/page/bloc/schedule/schedule_bloc.dart';
 import 'package:skripsi_iot_projector/page/bloc/theme/theme_bloc.dart';
@@ -87,6 +88,7 @@ void main() async {
         BlocProvider(
           create: (context) => LampusageHoursCubit()..fetchLampUsageHours(),
         ),
+        BlocProvider(create: (context) => HistoricalDataBloc()),
       ],
       child: const MyApp(),
     ),

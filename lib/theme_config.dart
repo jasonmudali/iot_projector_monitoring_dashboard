@@ -2,14 +2,32 @@ import 'package:flutter/material.dart';
 
 class ThemeConfig {
   static final lightTheme = ThemeData(
+    colorScheme: ColorScheme.light(
+      surface: Colors.white,
+      onSurface: Colors.black,
+      primary: Colors.black,
+      onPrimary: Colors.white,
+    ),
     brightness: Brightness.light,
     primarySwatch: Colors.blue,
     scaffoldBackgroundColor: Colors.white,
     fontFamily: 'Lato',
     textTheme: const TextTheme(
-      displayLarge: TextStyle(fontSize: 32.0, fontWeight: FontWeight.bold),
-      displayMedium: TextStyle(fontSize: 28.0, fontWeight: FontWeight.bold),
-      displaySmall: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+      displayLarge: TextStyle(
+        fontSize: 32.0,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
+      ),
+      displayMedium: TextStyle(
+        fontSize: 28.0,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
+      ),
+      displaySmall: TextStyle(
+        fontSize: 24.0,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
+      ),
     ),
     navigationRailTheme: NavigationRailThemeData(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -42,14 +60,32 @@ class ThemeConfig {
   );
 
   static final darkTheme = ThemeData(
+    colorScheme: ColorScheme.dark(
+      surface: const Color(0XFF0F172A),
+      onSurface: const Color(0xFFE2E8F0),
+      primary: const Color(0xFFF8FAFC),
+      onPrimary: const Color(0xFF0F172A),
+    ),
     brightness: Brightness.dark,
     primarySwatch: Colors.amber,
     scaffoldBackgroundColor: const Color(0XFF0F172A),
     fontFamily: 'Lato',
     textTheme: const TextTheme(
-      displayLarge: TextStyle(fontSize: 32.0, fontWeight: FontWeight.bold),
-      displayMedium: TextStyle(fontSize: 28.0, fontWeight: FontWeight.bold),
-      displaySmall: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+      displayLarge: TextStyle(
+        fontSize: 32.0,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
+      ),
+      displayMedium: TextStyle(
+        fontSize: 28.0,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
+      ),
+      displaySmall: TextStyle(
+        fontSize: 24.0,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
+      ),
     ),
     navigationRailTheme: NavigationRailThemeData(
       backgroundColor: const Color(0xFF020617),

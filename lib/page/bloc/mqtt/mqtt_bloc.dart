@@ -22,6 +22,10 @@ class MqttBloc extends Bloc<MqttEvent, MqttState> {
           humidityData: {},
           timeData: {},
           xValue: {},
+          historicalTempData: {},
+          historicalHumidData: {},
+          historicalTimeData: {},
+          currentMode: {},
         ),
       ) {
     on<StartListening>((event, emit) {
@@ -79,6 +83,72 @@ class MqttBloc extends Bloc<MqttEvent, MqttState> {
             },
             timeData: {...currentState.timeData, roomId: updatedTimeList},
             xValue: {...currentState.xValue, roomId: currentXValue + 1},
+            historicalTempData: currentState.historicalTempData,
+            historicalHumidData: currentState.historicalHumidData,
+            historicalTimeData: currentState.historicalTimeData,
+            currentMode: currentState.currentMode,
+          ),
+        );
+      }
+    });
+
+    on<ChangeModeEvent>((event, emit) {
+      final currentState = state;
+      if (currentState is ProjectorState) {
+        emit(
+          ProjectorState(
+            projectorStats: currentState.projectorStats,
+            temperatureData: currentState.temperatureData,
+            humidityData: currentState.humidityData,
+            xValue: currentState.xValue,
+            timeData: currentState.timeData,
+            historicalTempData: currentState.historicalTempData,
+            historicalHumidData: currentState.historicalHumidData,
+            historicalTimeData: currentState.historicalTimeData,
+            currentMode: {
+              ...currentState.currentMode,
+              event.roomId: event.mode,
+            },
+          ),
+        );
+      }
+    });
+
+    on<SetHistoricalDataEvent>((event, emit) {
+      final currentState = state;
+      if (currentState is ProjectorState) {
+        print(
+          "DEBUG [MqttBloc]: Storing historical data - RoomId: ${event.roomId}, Duration: ${event.duration}, TempData length: ${event.tempData.length}",
+        );
+        final updatedTempData = {...currentState.historicalTempData};
+        updatedTempData[event.roomId] = {
+          ...(updatedTempData[event.roomId] ?? {}),
+          event.duration: event.tempData,
+        };
+
+        final updatedHumidData = {...currentState.historicalHumidData};
+        updatedHumidData[event.roomId] = {
+          ...(updatedHumidData[event.roomId] ?? {}),
+          event.duration: event.humidData,
+        };
+
+        final updatedTimeData = {...currentState.historicalTimeData};
+        updatedTimeData[event.roomId] = {
+          ...(updatedTimeData[event.roomId] ?? {}),
+          event.duration: event.timeData,
+        };
+
+        emit(
+          ProjectorState(
+            projectorStats: currentState.projectorStats,
+            temperatureData: currentState.temperatureData,
+            humidityData: currentState.humidityData,
+            xValue: currentState.xValue,
+            timeData: currentState.timeData,
+            historicalTempData: updatedTempData,
+            historicalHumidData: updatedHumidData,
+            historicalTimeData: updatedTimeData,
+            currentMode: currentState.currentMode,
           ),
         );
       }

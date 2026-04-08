@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:skripsi_iot_projector/page/bloc/historical_data/historical_data_bloc.dart';
 import 'package:skripsi_iot_projector/page/bloc/mqtt/mqtt_bloc.dart';
 
 enum ChartMode { live, hour, day }
@@ -22,8 +23,7 @@ class DetailDashboard extends StatefulWidget {
 
 class _DetailDashboardState extends State<DetailDashboard>
     with TickerProviderStateMixin {
-  ChartMode selectedModeTemp = ChartMode.live;
-  ChartMode selectedModeHumid = ChartMode.live;
+  ChartMode selectedMode = ChartMode.live;
   late AnimationController _statusAnimController;
 
   @override
@@ -33,23 +33,33 @@ class _DetailDashboardState extends State<DetailDashboard>
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     )..repeat(reverse: true);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<MqttBloc>().add(
+          ChangeModeEvent(widget.roomName, ChartMode.live.name),
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
     _statusAnimController.dispose();
+
+    if (mounted) {
+      context.read<MqttBloc>().add(
+        ChangeModeEvent(widget.roomName, ChartMode.live.name),
+      );
+    }
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final double screenWidth = MediaQuery.of(context).size.width;
-
-    List<FlSpot> temperatureData = [];
-    List<FlSpot> humidityData = [];
-    int xValue = 0;
+    final cardColor = Theme.of(context).canvasColor;
 
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
@@ -144,154 +154,332 @@ class _DetailDashboardState extends State<DetailDashboard>
                 ],
               ),
               const SizedBox(height: 24),
-              BlocBuilder<MqttBloc, MqttState>(
-                builder: (context, state) {
-                  final data = (state as ProjectorState).projectorStats;
-
-                  return Wrap(
-                    spacing: 20,
-                    runSpacing: 20,
-                    children: [
-                      _buildChartCard(
-                        context,
-                        icon: Icons.thermostat,
-                        title: "Temperature",
-                        value:
-                            "${data[widget.roomName]?.temperature.toStringAsFixed(1) ?? "0"}",
-                        unit: "°C",
-                        lineArrowColor: Colors.orange,
-                        cardColor: cardColor,
-                        chartData: state.temperatureData[widget.roomName] ?? [],
-                        timeData: state.timeData[widget.roomName] ?? [],
-                        selectedMode: selectedModeTemp,
-                        onModeChanged: (newMode) {
-                          setState(() => selectedModeTemp = newMode);
+              // Mode selection dropdown
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      'Data View Mode: ',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: SegmentedButton<ChartMode>(
+                        showSelectedIcon: false,
+                        style: SegmentedButton.styleFrom(
+                          visualDensity: VisualDensity.comfortable,
+                          selectedForegroundColor: Theme.of(context).focusColor,
+                          selectedBackgroundColor: Theme.of(
+                            context,
+                          ).primaryColor,
+                          side: BorderSide.none,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          backgroundColor: Colors.transparent,
+                          textStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        segments: const [
+                          ButtonSegment(
+                            value: ChartMode.live,
+                            label: Text('Live'),
+                          ),
+                          ButtonSegment(
+                            value: ChartMode.hour,
+                            label: Text('1H'),
+                          ),
+                          ButtonSegment(
+                            value: ChartMode.day,
+                            label: Text('24H'),
+                          ),
+                        ],
+                        selected: {selectedMode},
+                        onSelectionChanged: (Set<ChartMode> newSelection) {
+                          setState(() => selectedMode = newSelection.first);
+                          context.read<MqttBloc>().add(
+                            ChangeModeEvent(
+                              widget.roomName,
+                              newSelection.first.name,
+                            ),
+                          );
+                          if (newSelection.first != ChartMode.live) {
+                            context.read<HistoricalDataBloc>().add(
+                              FetchHistoricalData(
+                                classroom: widget.roomName,
+                                duration: newSelection.first.name,
+                              ),
+                            );
+                          }
                         },
                       ),
-                      _buildChartCard(
-                        context,
-                        icon: Icons.water_drop,
-                        title: "Humidity",
-                        value:
-                            "${data[widget.roomName]?.humidity.toStringAsFixed(1) ?? "0"}",
-                        unit: "%",
-                        lineArrowColor: Colors.blue,
-                        cardColor: cardColor,
-                        chartData: state.humidityData[widget.roomName] ?? [],
-                        timeData: state.timeData[widget.roomName] ?? [],
-                        selectedMode: selectedModeHumid,
-                        onModeChanged: (newMode) {
-                          setState(() => selectedModeHumid = newMode);
-                        },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              BlocListener<HistoricalDataBloc, HistoricalDataState>(
+                listener: (context, histState) {
+                  if (histState is HistoricalDataLoaded) {
+                    final duration = selectedMode == ChartMode.hour
+                        ? "hour"
+                        : "day";
+                    print(
+                      "DEBUG: HistoricalDataLoaded received. Duration: $duration",
+                    );
+                    context.read<MqttBloc>().add(
+                      SetHistoricalDataEvent(
+                        roomId: widget.roomName,
+                        duration: duration,
+                        tempData: histState.tempData,
+                        humidData: histState.humidData,
+                        timeData: histState.timeData,
                       ),
-                      Container(
-                        width: 400,
-                        height: 330,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: cardColor,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Lamp Usage",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color:
-                                    Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? Colors.grey
-                                    : Colors.black.withOpacity(0.8),
-                              ),
-                            ),
-                            SizedBox(height: 10),
-                            Expanded(
-                              child: PieChart(
-                                PieChartData(
-                                  startDegreeOffset: 270,
-                                  sectionsSpace: 2,
-                                  centerSpaceRadius: 50,
-                                  sections: [
-                                    PieChartSectionData(
-                                      value: widget.lampHours.toDouble(),
-                                      color: Colors.blue,
-                                      radius: 20,
-                                      showTitle: false,
-                                    ),
-                                    PieChartSectionData(
-                                      value: (5000 - widget.lampHours)
-                                          .toDouble(),
-                                      color: Colors.grey.withOpacity(0.2),
-                                      radius: 20,
-                                      showTitle: false,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.circle,
-                                      color: Colors.blue,
-                                      size: 10,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      "Used: ${widget.lampHours}h",
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).textTheme.bodyMedium?.color,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(width: 20),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.circle,
-                                      color: Colors.grey.withOpacity(0.2),
-                                      size: 10,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      "Available: ${(5000 - widget.lampHours)}h",
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).textTheme.bodyMedium?.color,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
+                    );
+                  }
                 },
+                child: BlocBuilder<HistoricalDataBloc, HistoricalDataState>(
+                  builder: (context, histState) {
+                    return BlocBuilder<MqttBloc, MqttState>(
+                      builder: (context, state) {
+                        final data = (state as ProjectorState).projectorStats;
+                        final isLoading =
+                            histState is HistoricalDataLoading &&
+                            selectedMode != ChartMode.live;
+
+                        return Wrap(
+                          spacing: 20,
+                          runSpacing: 20,
+                          children: [
+                            if (isLoading)
+                              _buildLoadingChartCard(
+                                context,
+                                title: "Temperature",
+                                lineArrowColor: Colors.orange,
+                                cardColor: cardColor,
+                              )
+                            else
+                              _buildChartCard(
+                                context,
+                                icon: Icons.thermostat,
+                                title: "Temperature",
+                                value:
+                                    "${data[widget.roomName]?.temperature.toStringAsFixed(1) ?? "0"}",
+                                unit: "°C",
+                                lineArrowColor: Colors.orange,
+                                cardColor: cardColor,
+                                chartData:
+                                    state.getDisplayTemperatureData(
+                                      widget.roomName,
+                                    ) ??
+                                    [],
+                                timeData:
+                                    state.getDisplayTimeData(widget.roomName) ??
+                                    [],
+                                isLive: selectedMode == ChartMode.live,
+                                averageValue: state.getAverageTemperatureValue(
+                                  widget.roomName,
+                                ),
+                              ),
+                            if (isLoading)
+                              _buildLoadingChartCard(
+                                context,
+                                title: "Humidity",
+                                lineArrowColor: Colors.blue,
+                                cardColor: cardColor,
+                              )
+                            else
+                              _buildChartCard(
+                                context,
+                                icon: Icons.water_drop,
+                                title: "Humidity",
+                                value:
+                                    "${data[widget.roomName]?.humidity.toStringAsFixed(1) ?? "0"}",
+                                unit: "%",
+                                lineArrowColor: Colors.blue,
+                                cardColor: cardColor,
+                                chartData:
+                                    state.getDisplayHumidityData(
+                                      widget.roomName,
+                                    ) ??
+                                    [],
+                                timeData:
+                                    state.getDisplayTimeData(widget.roomName) ??
+                                    [],
+                                isLive: selectedMode == ChartMode.live,
+                                averageValue: state.getAverageHumidityValue(
+                                  widget.roomName,
+                                ),
+                              ),
+                            Container(
+                              width: 400,
+                              height: 330,
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: cardColor,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Lamp Usage",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color:
+                                          Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.grey
+                                          : Colors.black.withOpacity(0.8),
+                                    ),
+                                  ),
+                                  SizedBox(height: 10),
+                                  Expanded(
+                                    child: PieChart(
+                                      PieChartData(
+                                        startDegreeOffset: 270,
+                                        sectionsSpace: 2,
+                                        centerSpaceRadius: 50,
+                                        sections: [
+                                          PieChartSectionData(
+                                            value: widget.lampHours.toDouble(),
+                                            color: Colors.blue,
+                                            radius: 20,
+                                            showTitle: false,
+                                          ),
+                                          PieChartSectionData(
+                                            value: (5000 - widget.lampHours)
+                                                .toDouble(),
+                                            color: Colors.grey.withOpacity(0.2),
+                                            radius: 20,
+                                            showTitle: false,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.circle,
+                                            color: Colors.blue,
+                                            size: 10,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            "Used: ${widget.lampHours}h",
+                                            style: TextStyle(
+                                              color: Theme.of(
+                                                context,
+                                              ).textTheme.bodyMedium?.color,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(width: 20),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.circle,
+                                            color: Colors.grey.withOpacity(0.2),
+                                            size: 10,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            "Available: ${(5000 - widget.lampHours)}h",
+                                            style: TextStyle(
+                                              color: Theme.of(
+                                                context,
+                                              ).textTheme.bodyMedium?.color,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingChartCard(
+    BuildContext context, {
+    required String title,
+    required Color lineArrowColor,
+    required Color cardColor,
+  }) {
+    return Container(
+      width: 400,
+      height: 330,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey
+                  : Colors.black.withOpacity(0.8),
+            ),
+          ),
+          const SizedBox(height: 30),
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(lineArrowColor),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Loading historical data...',
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.grey
+                          : Colors.black54,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -306,8 +494,8 @@ class _DetailDashboardState extends State<DetailDashboard>
     required Color cardColor,
     required List<FlSpot> chartData,
     required List<DateTime> timeData,
-    required ChartMode selectedMode,
-    required Function(ChartMode) onModeChanged,
+    required bool isLive,
+    double? averageValue,
   }) {
     double dynamicInterval = 1.0;
     if (chartData.length > 10) {
@@ -327,13 +515,6 @@ class _DetailDashboardState extends State<DetailDashboard>
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -348,55 +529,32 @@ class _DetailDashboardState extends State<DetailDashboard>
             ),
           ),
           SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: lineArrowColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: lineArrowColor),
-              ),
-              SizedBox(
-                height: 35,
-                child: SegmentedButton<ChartMode>(
-                  showSelectedIcon: false,
-                  style: SegmentedButton.styleFrom(
-                    // padding: EdgeInsets.all(10),
-                    visualDensity: VisualDensity.comfortable,
-                    selectedForegroundColor: Colors.white,
-                    selectedBackgroundColor: lineArrowColor,
-                    side: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                    textStyle: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  segments: const [
-                    ButtonSegment(value: ChartMode.live, label: Text('Live')),
-                    ButtonSegment(value: ChartMode.hour, label: Text('1H')),
-                    ButtonSegment(value: ChartMode.day, label: Text('24H')),
-                  ],
-                  selected: {selectedMode},
-                  onSelectionChanged: (Set<ChartMode> newSelection) {
-                    onModeChanged(newSelection.first);
-                    print(newSelection.first);
-                  },
-                ),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: lineArrowColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: lineArrowColor),
           ),
           SizedBox(height: 14),
-          Text(
-            value + " " + unit,
-            style: TextStyle(
-              fontSize: 26,
-              color: Theme.of(context).primaryColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          isLive
+              ? Text(
+                  value + " " + unit,
+                  style: TextStyle(
+                    fontSize: 22,
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              : Text(
+                  "Average: " + averageValue!.toStringAsFixed(1) + " " + unit,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
           const SizedBox(height: 30),
           Expanded(
             child: LineChart(
@@ -417,11 +575,7 @@ class _DetailDashboardState extends State<DetailDashboard>
                     ),
                   ),
                   bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      // showTitles: true,
-                      reservedSize: 30,
-                      // interval: dynamicInterval,
-                    ),
+                    sideTitles: SideTitles(reservedSize: 30),
                   ),
                   rightTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
@@ -452,9 +606,7 @@ class _DetailDashboardState extends State<DetailDashboard>
                         return spotIndexes.map((index) {
                           return TouchedSpotIndicatorData(
                             FlLine(
-                              color: Colors.grey.withOpacity(
-                                0.5,
-                              ), // Subtle color
+                              color: Colors.grey.withOpacity(0.5),
                               strokeWidth: 2.0,
                               dashArray: [3, 3],
                             ),
@@ -473,8 +625,6 @@ class _DetailDashboardState extends State<DetailDashboard>
                     getTooltipColor: (spot) => Colors.blueGrey.withOpacity(0.9),
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((spot) {
-                        final index = spot.x.toInt();
-
                         final int listIndex = touchedSpots.first.spotIndex;
 
                         final times = timeData;

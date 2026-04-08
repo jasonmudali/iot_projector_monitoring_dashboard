@@ -24,6 +24,7 @@ class _ScheduleState extends State<Schedule> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  PageController? _pageController;
 
   void initState() {
     super.initState();
@@ -47,6 +48,8 @@ class _ScheduleState extends State<Schedule> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return BlocBuilder<ScheduleBloc, ScheduleState>(
       builder: (context, state) {
         if (state is ScheduleLoading) {
@@ -85,23 +88,205 @@ class _ScheduleState extends State<Schedule> {
               ? state.selectedDate
               : (_selectedDay ?? _focusedDay);
 
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _scheduleCalendar(
-                context,
-                wholeSchedule: wholeSchedule,
-                selectedDaySchedule: selectedDaySchedule,
-                selectedDay: activeSelectedDay,
-                focusedDay: activeSelectedDay,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Class Schedule",
+                        style: TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "Monitor your daily academic agenda while maintaining real-time synchronization with campus-wide lecture timings and projector status.",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 9.0),
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 18,
+                        ),
+                      ),
+                      icon: const Icon(Icons.swap_horiz_rounded, size: 20),
+                      label: const Text(
+                        "Replace Schedule",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            backgroundColor: theme.scaffoldBackgroundColor,
+                            titlePadding: const EdgeInsets.fromLTRB(
+                              24,
+                              24,
+                              24,
+                              0,
+                            ),
+                            title: Row(
+                              children: [
+                                Icon(
+                                  Icons.swap_horiz_rounded,
+                                  color: Colors.orange,
+                                ),
+                                const SizedBox(width: 10),
+                                const Text(
+                                  "Replace Schedule",
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            content: SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.3,
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(
+                                    color: Colors.orange.withOpacity(0.2),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.warning_amber_rounded,
+                                      color: Colors.orange,
+                                      size: 32,
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Text(
+                                        "Are you sure you want to delete all schedules and upload a new schedule? This action cannot be undone.",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: isDark
+                                              ? Colors.grey[300]
+                                              : Colors.grey[700],
+                                          height: 1.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            actionsPadding: const EdgeInsets.fromLTRB(
+                              16,
+                              0,
+                              16,
+                              16,
+                            ),
+                            actions: [
+                              SizedBox(
+                                width: double.infinity,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: Text(
+                                          "Cancel",
+                                          style: TextStyle(
+                                            color: theme.primaryColor,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.orange,
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 15,
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          context.read<ScheduleBloc>().add(
+                                            ReplaceScheduleEvent(),
+                                          );
+                                          Navigator.pop(context);
+                                        },
+                                        child: const Text(
+                                          "Replace Schedule",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 24),
+
+              const SizedBox(height: 30),
               Expanded(
-                child: ScheduleListView(
-                  scheduleForSelectedDay: selectedDaySchedule,
-                  groupedSchedules: groupedTodaySchedule,
-                  selectedDay: activeSelectedDay,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _scheduleCalendar(
+                      context,
+                      wholeSchedule: wholeSchedule,
+                      selectedDaySchedule: selectedDaySchedule,
+                      selectedDay: activeSelectedDay,
+                      focusedDay: activeSelectedDay,
+                    ),
+                    SizedBox(width: 20),
+                    Expanded(
+                      child: ScheduleListView(
+                        scheduleForSelectedDay: selectedDaySchedule,
+                        groupedSchedules: groupedTodaySchedule,
+                        selectedDay: activeSelectedDay,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -422,25 +607,23 @@ class _ScheduleState extends State<Schedule> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      width: 300,
-      height: 385,
+      width: 450,
+      height: 500,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.canvasColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: Colors.black.withOpacity(0.2),
+        //     blurRadius: 10,
+        //     offset: const Offset(0, 5),
+        //   ),
+        // ],
       ),
       child: TableCalendar(
-        rowHeight: 45,
+        onCalendarCreated: (pageController) => _pageController = pageController,
+        rowHeight: 60,
         sixWeekMonthsEnforced: false,
         firstDay: DateTime.utc(2020, 1, 1),
         lastDay: DateTime.utc(2030, 12, 31),
@@ -483,18 +666,59 @@ class _ScheduleState extends State<Schedule> {
         },
         headerStyle: HeaderStyle(
           formatButtonVisible: false,
-          titleCentered: true,
+          headerMargin: const EdgeInsets.only(left: 8.0),
+          headerPadding: const EdgeInsets.symmetric(vertical: 14.0),
+          rightChevronPadding: EdgeInsets.only(
+            left: 12.0,
+            right: 0.0,
+            top: 12.0,
+            bottom: 12.0,
+          ),
           titleTextStyle: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
-          leftChevronIcon: Icon(Icons.chevron_left, color: theme.primaryColor),
-          rightChevronIcon: Icon(
-            Icons.chevron_right,
-            color: theme.primaryColor,
+          leftChevronVisible: false,
+          rightChevronIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Manual Left Button
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                icon: Icon(
+                  Icons.chevron_left,
+                  color: theme.primaryColor,
+                  size: 18,
+                ),
+                onPressed: () {
+                  _pageController!.previousPage(
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOut,
+                  );
+                },
+              ),
+              const SizedBox(width: 16),
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                icon: Icon(
+                  Icons.chevron_right,
+                  color: theme.primaryColor,
+                  size: 18,
+                ),
+                onPressed: () {
+                  _pageController!.nextPage(
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOut,
+                  );
+                },
+              ),
+            ],
           ),
         ),
         calendarStyle: CalendarStyle(
+          cellMargin: const EdgeInsets.all(12.0),
           markersMaxCount: 1,
           markerDecoration: BoxDecoration(
             color: theme.primaryColor,
@@ -531,10 +755,12 @@ class _ScheduleState extends State<Schedule> {
           weekdayStyle: TextStyle(
             color: isDark ? Colors.white70 : Colors.black54,
             fontWeight: FontWeight.bold,
+            fontSize: 13,
           ),
           weekendStyle: const TextStyle(
             color: Colors.redAccent,
             fontWeight: FontWeight.bold,
+            fontSize: 13,
           ),
         ),
         calendarBuilders: CalendarBuilders(
