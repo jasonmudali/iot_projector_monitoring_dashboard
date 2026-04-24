@@ -34,7 +34,15 @@ class HomePage extends StatelessWidget {
               ],
             )
           : null,
-      drawer: !isDesktop ? Drawer(child: Container()) : null,
+      drawer: !isDesktop
+          ? Drawer(
+              child: Sidebar(
+                navigationShell: navigationShell,
+                isDesktop: false,
+              ),
+              width: 250,
+            )
+          : null,
       body: isDesktop
           ? Row(
               children: [

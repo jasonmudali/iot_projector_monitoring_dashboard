@@ -506,6 +506,10 @@ class _DetailDashboardState extends State<DetailDashboard>
     double minX = chartData.isNotEmpty ? chartData.first.x : 0;
     double maxX = chartData.isNotEmpty ? chartData.last.x : 10;
 
+    if (double.parse(value) < 0.0) {
+      value = "N/A";
+    }
+
     if (maxX - minX < 10) maxX = minX + 10;
 
     return Container(

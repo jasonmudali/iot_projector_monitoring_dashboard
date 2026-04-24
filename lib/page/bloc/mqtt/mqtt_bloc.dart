@@ -58,12 +58,17 @@ class MqttBloc extends Bloc<MqttEvent, MqttState> {
         );
         final currentXValue = currentState.xValue[roomId] ?? 0;
 
-        updatedTempList.add(
-          FlSpot(currentXValue.toDouble(), updatedModel.temperature),
-        );
-        updatedHumidList.add(
-          FlSpot(currentXValue.toDouble(), updatedModel.humidity),
-        );
+        if (updatedModel.temperature > 0) {
+          updatedTempList.add(
+            FlSpot(currentXValue.toDouble(), updatedModel.temperature),
+          );
+        }
+
+        if (updatedModel.humidity > 0) {
+          updatedHumidList.add(
+            FlSpot(currentXValue.toDouble(), updatedModel.humidity),
+          );
+        }
         updatedTimeList.add(DateTime.now());
         // if (updatedTempList.length > 20) {
         //   updatedTempList.removeAt(0);

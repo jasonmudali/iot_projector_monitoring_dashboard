@@ -104,7 +104,7 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'Skripsi IoT Projector',
+      title: 'Projector Monitoring System',
       theme: ThemeConfig.lightTheme,
       darkTheme: ThemeConfig.darkTheme,
       themeMode: themeBloc.themeMode,

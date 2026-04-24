@@ -6,17 +6,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 class Sidebar extends StatefulWidget {
-  Sidebar({super.key, required this.navigationShell});
+  Sidebar({super.key, required this.navigationShell, this.isDesktop = true});
 
   final StatefulNavigationShell navigationShell;
+  final bool isDesktop;
 
   @override
   State<Sidebar> createState() => _SidebarState();
 }
 
 class _SidebarState extends State<Sidebar> {
-  int selectedIndex = 0;
-
   @override
   Widget build(BuildContext context) {
     List<SidebarItem> sidebarItems = [
@@ -46,7 +45,8 @@ class _SidebarState extends State<Sidebar> {
                 itemCount: sidebarItems.length,
                 itemBuilder: (context, index) {
                   final item = sidebarItems[index];
-                  final isSelected = selectedIndex == index;
+                  final isSelected =
+                      widget.navigationShell.currentIndex == index;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Material(
@@ -57,9 +57,6 @@ class _SidebarState extends State<Sidebar> {
                         ).primaryColor.withOpacity(0.1),
                         splashColor: Colors.transparent,
                         onTap: () {
-                          setState(() {
-                            selectedIndex = index;
-                          });
                           if (index == 1 &&
                               widget.navigationShell.currentIndex != 1) {
                             context.read<ScheduleBloc>().add(
@@ -71,6 +68,10 @@ class _SidebarState extends State<Sidebar> {
                             initialLocation:
                                 index == widget.navigationShell.currentIndex,
                           );
+
+                          if (!widget.isDesktop) {
+                            Navigator.of(context).pop();
+                          }
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
