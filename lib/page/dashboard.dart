@@ -4,14 +4,12 @@ import 'package:skripsi_iot_projector/page/bloc/cubit/lampusage_hours_cubit.dart
 import 'package:skripsi_iot_projector/page/bloc/mqtt/mqtt_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:skripsi_iot_projector/page/detail_dashboard.dart';
 
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = Theme.of(context).canvasColor;
 
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -19,67 +17,68 @@ class Dashboard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.all(18.0),
-      child: Column(
-        crossAxisAlignment: isDesktop
-            ? CrossAxisAlignment.start
-            : CrossAxisAlignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Projector Monitoring Dashboard',
-              style: Theme.of(context).textTheme.displayMedium,
-            ),
-          ),
-          SizedBox(height: 20),
-          Expanded(
-            child: SingleChildScrollView(
-              child: BlocBuilder<MqttBloc, MqttState>(
-                builder: (context, state) {
-                  final data = (state as ProjectorState).projectorStats;
-                  return Padding(
-                    padding: isDesktop
-                        ? EdgeInsets.zero
-                        : const EdgeInsets.only(right: 20),
-                    child: Wrap(
-                      spacing: 20,
-                      runSpacing: 20,
-                      children: [
-                        _buildClassCard(
-                          context,
-                          roomName: "HD03",
-                          temp: data["HD03"]?.temperature ?? 0.0,
-                          hours: "0",
-                          humidity: data["HD03"]?.humidity ?? 0.0,
-                          isOn: data["HD03"]?.status == "ON" ? true : false,
-                          cardColor: cardColor,
-                        ),
-                        _buildClassCard(
-                          context,
-                          roomName: "HD04",
-                          temp: data["HD04"]?.temperature ?? 0.0,
-                          hours: "0",
-                          humidity: data["HD04"]?.humidity ?? 0.0,
-                          isOn: data["HD04"]?.status == "ON" ? true : false,
-                          cardColor: cardColor,
-                        ),
-                        _buildClassCard(
-                          context,
-                          roomName: "L1D",
-                          temp: data["L1D"]?.temperature ?? 0.0,
-                          hours: "0",
-                          humidity: data["L1D"]?.humidity ?? 0.0,
-                          isOn: data["L1D"]?.status == "ON" ? true : false,
-                          cardColor: cardColor,
-                        ),
-                      ],
+      child: SingleChildScrollView(
+        child: BlocBuilder<MqttBloc, MqttState>(
+          builder: (context, state) {
+            final data = (state as ProjectorState).projectorStats;
+            return Padding(
+              padding: isDesktop
+                  ? EdgeInsets.zero
+                  : const EdgeInsets.only(right: 20),
+              child: Column(
+                crossAxisAlignment: isDesktop
+                    ? CrossAxisAlignment.start
+                    : CrossAxisAlignment.center,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Projector Monitoring Dashboard',
+                      style: Theme.of(context).textTheme.displayMedium,
                     ),
-                  );
-                },
+                  ),
+                  SizedBox(height: 20),
+                  Wrap(
+                    spacing: 20,
+                    runSpacing: 20,
+                    children: [
+                      _buildClassCard(
+                        context,
+                        roomName: "HD03",
+                        temp: data["HD03"]?.temperature ?? 0.0,
+                        hours: "0",
+                        humidity: data["HD03"]?.humidity ?? 0.0,
+                        isOn: data["HD03"]?.status == "ON" ? true : false,
+                        isHumanPresent: data["HD03"]?.presence ?? false,
+                        cardColor: cardColor,
+                      ),
+                      _buildClassCard(
+                        context,
+                        roomName: "HD04",
+                        temp: data["HD04"]?.temperature ?? 0.0,
+                        hours: "0",
+                        humidity: data["HD04"]?.humidity ?? 0.0,
+                        isOn: data["HD04"]?.status == "ON" ? true : false,
+                        isHumanPresent: data["HD04"]?.presence ?? false,
+                        cardColor: cardColor,
+                      ),
+                      _buildClassCard(
+                        context,
+                        roomName: "L1D",
+                        temp: data["L1D"]?.temperature ?? 0.0,
+                        hours: "0",
+                        humidity: data["L1D"]?.humidity ?? 0.0,
+                        isOn: data["L1D"]?.status == "ON" ? true : false,
+                        isHumanPresent: data["L1D"]?.presence ?? false,
+                        cardColor: cardColor,
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ),
-          ),
-        ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -92,6 +91,7 @@ Widget _buildClassCard(
   required double humidity,
   required String hours,
   required bool isOn,
+  required bool isHumanPresent,
   required Color cardColor,
 }) {
   final double width = MediaQuery.of(context).size.width;
@@ -124,6 +124,10 @@ Widget _buildClassCard(
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isOn ? statusColor : Colors.transparent,
+          width: 1.2,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,7 +146,9 @@ Widget _buildClassCard(
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.2),
+                  color: isOn
+                      ? statusColor.withOpacity(0.3)
+                      : statusColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -175,21 +181,38 @@ Widget _buildClassCard(
                 _infoRow(
                   Icons.thermostat_rounded,
                   "Temp",
-                  "${temp.toStringAsFixed(1)}°C",
+                  Text(
+                    "${temp.toStringAsFixed(1)}°C",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const Color.fromARGB(255, 255, 115, 0),
                 ),
                 _infoRow(
                   Icons.lightbulb_outline_rounded,
                   "Lamp",
-                  "${hours}h",
+                  Text("${hours}h"),
                   Colors.amber,
                   roomName,
                 ),
                 _infoRow(
                   Icons.water_drop_outlined,
                   "Humidity",
-                  "${humidity.toStringAsFixed(0)}%",
+                  Text(
+                    "${humidity.toStringAsFixed(0)}%",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   Colors.blueAccent,
+                ),
+                _infoRow(
+                  Icons.person_outline_rounded,
+                  "People",
+                  isHumanPresent
+                      ? Icon(
+                          Icons.check_circle_outline,
+                          color: Colors.green.withOpacity(0.8),
+                        )
+                      : Icon(Icons.cancel, color: Colors.red.withOpacity(0.8)),
+                  Colors.black,
                 ),
               ],
             ),
@@ -203,7 +226,7 @@ Widget _buildClassCard(
 Widget _infoRow(
   IconData icon,
   String label,
-  String value,
+  Widget value,
   Color color, [
   String? roomName,
 ]) {
@@ -236,7 +259,7 @@ Widget _infoRow(
                 return const Text('Loading...');
               },
             )
-          : Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          : value,
     ],
   );
 }

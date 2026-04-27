@@ -3,12 +3,14 @@ class ProjectorModel {
   final String status;
   final double temperature;
   final double humidity;
+  final bool presence;
 
   ProjectorModel({
     this.id = "HD3",
     this.status = "OFF",
     this.temperature = 0.0,
     this.humidity = 0.0,
+    this.presence = false,
   });
 
   factory ProjectorModel.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class ProjectorModel {
       status: json['status'] ?? "OFF",
       temperature: json['temperature']?.toDouble() ?? 0.0,
       humidity: json['humidity']?.toDouble() ?? 0.0,
+      presence: json['presence'] ?? false,
     );
   }
 
@@ -26,6 +29,7 @@ class ProjectorModel {
       'status': status,
       'temperature': temperature,
       'humidity': humidity,
+      'presence': presence,
     };
   }
 }

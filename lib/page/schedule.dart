@@ -299,6 +299,7 @@ class _ScheduleState extends State<Schedule> {
                             groupedSchedules: groupedTodaySchedule,
                             selectedDay: activeSelectedDay,
                             isMobile: isMobile,
+                            isDesktop: isDesktop,
                           ),
                         ),
                       ],

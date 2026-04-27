@@ -14,6 +14,7 @@ class ScheduleListView extends StatefulWidget {
   Map<String, List<ScheduleModel>> groupedSchedules;
   DateTime? selectedDay;
   bool isMobile;
+  bool isDesktop;
 
   ScheduleListView({
     super.key,
@@ -21,6 +22,7 @@ class ScheduleListView extends StatefulWidget {
     required this.groupedSchedules,
     required this.selectedDay,
     this.isMobile = false,
+    this.isDesktop = false,
   });
 
   @override
@@ -79,6 +81,8 @@ class _ScheduleListViewState extends State<ScheduleListView> {
               } else {
                 return widget.scheduleForSelectedDay.isEmpty
                     ? Container(
+                        height: widget.isMobile ? 200 : 500,
+                        padding: const EdgeInsets.symmetric(vertical: 40),
                         decoration: BoxDecoration(
                           color: theme.canvasColor,
                           borderRadius: BorderRadius.circular(12),
@@ -185,6 +189,7 @@ class _ScheduleListViewState extends State<ScheduleListView> {
                                   Expanded(
                                     child: Column(
                                       children: [
+                                        SizedBox(height: 6),
                                         ...classesAtThisTime.map((schedule) {
                                           bool isHovered = false;
 
@@ -212,18 +217,10 @@ class _ScheduleListViewState extends State<ScheduleListView> {
                                                     Padding(
                                                       padding:
                                                           const EdgeInsets.only(
+                                                            right: 6,
                                                             bottom: 6,
                                                           ),
                                                       child: Material(
-                                                        color: isDark
-                                                            ? Colors.white
-                                                                  .withOpacity(
-                                                                    0.02,
-                                                                  )
-                                                            : Colors.black
-                                                                  .withOpacity(
-                                                                    0.015,
-                                                                  ),
                                                         borderRadius:
                                                             BorderRadius.circular(
                                                               10,
@@ -283,23 +280,12 @@ class _ScheduleListViewState extends State<ScheduleListView> {
                                                                   vertical: 14,
                                                                 ),
                                                             decoration: BoxDecoration(
+                                                              color: Colors
+                                                                  .transparent,
                                                               borderRadius:
                                                                   BorderRadius.circular(
                                                                     10,
                                                                   ),
-                                                              // border: Border.all(
-                                                              //   color: isDark
-                                                              //       ? Colors
-                                                              //             .white
-                                                              //             .withOpacity(
-                                                              //               0.04,
-                                                              //             )
-                                                              //       : Colors
-                                                              //             .black
-                                                              //             .withOpacity(
-                                                              //               0.03,
-                                                              //             ),
-                                                              // ),
                                                             ),
                                                             child: Row(
                                                               children: [
@@ -406,8 +392,8 @@ class _ScheduleListViewState extends State<ScheduleListView> {
                                                                   ),
                                                                 ),
                                                                 isHovered ||
-                                                                        widget
-                                                                            .isMobile
+                                                                        !widget
+                                                                            .isDesktop
                                                                     ? Row(
                                                                         children: [
                                                                           IconButton(
