@@ -11,7 +11,7 @@ class HistoricalProjectorDataModel {
 
   factory HistoricalProjectorDataModel.fromJson(Map<String, dynamic> json) {
     return HistoricalProjectorDataModel(
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: DateTime.parse(json['created_at']).add(Duration(hours: 7)),
       temperature: (json['temp'] ?? 0).toDouble(),
       humidity: (json['humid'] ?? 0).toDouble(),
     );
