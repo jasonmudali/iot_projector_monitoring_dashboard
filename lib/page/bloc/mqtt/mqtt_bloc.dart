@@ -158,5 +158,16 @@ class MqttBloc extends Bloc<MqttEvent, MqttState> {
         );
       }
     });
+
+    on<CalibrateLuxValueEvent>((event, emit) async {
+      final currentState = state;
+      emit(CalibratingLuxValueState());
+      mqttRepository.triggerCalibrateLuxValue();
+      await Future.delayed(const Duration(seconds: 2));
+
+      if (currentState is ProjectorState) {
+        emit(currentState);
+      }
+    });
   }
 }

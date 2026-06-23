@@ -96,3 +96,7 @@ class ProjectorState extends MqttState {
     return null;
   }
 }
+
+class CalibratingLuxValueState extends MqttState {}
+
+class CalibratedLuxValueState extends MqttState {}

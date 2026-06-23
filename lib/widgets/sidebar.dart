@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:skripsi_iot_projector/model/sidebar_item.dart';
+import 'package:skripsi_iot_projector/page/bloc/cubit/lampusage_hours_cubit.dart';
 import 'package:skripsi_iot_projector/page/bloc/schedule/schedule_bloc.dart';
 import 'package:skripsi_iot_projector/page/bloc/theme/theme_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -62,6 +63,10 @@ class _SidebarState extends State<Sidebar> {
                             context.read<ScheduleBloc>().add(
                               LoadScheduleEvent(),
                             );
+                          }
+                          if (index == 0 &&
+                              widget.navigationShell.currentIndex != 0) {
+                            LampusageHoursCubit().fetchLampUsageHours();
                           }
                           widget.navigationShell.goBranch(
                             index,

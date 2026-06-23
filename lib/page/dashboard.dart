@@ -19,6 +19,7 @@ class Dashboard extends StatelessWidget {
       padding: const EdgeInsets.all(18.0),
       child: SingleChildScrollView(
         child: BlocBuilder<MqttBloc, MqttState>(
+          buildWhen: (previous, current) => current is ProjectorState,
           builder: (context, state) {
             final data = (state as ProjectorState).projectorStats;
             return Padding(

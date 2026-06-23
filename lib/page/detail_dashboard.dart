@@ -46,13 +46,6 @@ class _DetailDashboardState extends State<DetailDashboard>
   @override
   void dispose() {
     _statusAnimController.dispose();
-
-    if (mounted) {
-      context.read<MqttBloc>().add(
-        ChangeModeEvent(widget.roomName, ChartMode.live.name),
-      );
-    }
-
     super.dispose();
   }
 
@@ -92,6 +85,7 @@ class _DetailDashboardState extends State<DetailDashboard>
                     ).textTheme.titleMedium?.copyWith(color: Colors.grey),
                   ),
                   BlocBuilder<MqttBloc, MqttState>(
+                    buildWhen: (previous, current) => current is ProjectorState,
                     builder: (context, state) {
                       final data = (state as ProjectorState).projectorStats;
                       final isOn = data[widget.roomName]?.status == "ON"
@@ -157,72 +151,164 @@ class _DetailDashboardState extends State<DetailDashboard>
               // Mode selection dropdown
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
+                  // horizontal: 16,
                   vertical: 12,
                 ),
                 child: Row(
                   children: [
-                    Text(
-                      'Data View Mode: ',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.withOpacity(0.3)),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: SegmentedButton<ChartMode>(
-                        showSelectedIcon: false,
-                        style: SegmentedButton.styleFrom(
-                          visualDensity: VisualDensity.comfortable,
-                          selectedForegroundColor: Theme.of(context).focusColor,
-                          selectedBackgroundColor: Theme.of(
-                            context,
-                          ).primaryColor,
-                          side: BorderSide.none,
-                          shape: RoundedRectangleBorder(
+                    Row(
+                      children: [
+                        Text(
+                          'Data View Mode: ',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Colors.grey.withOpacity(0.3),
+                            ),
                             borderRadius: BorderRadius.circular(15),
                           ),
-                          backgroundColor: Colors.transparent,
-                          textStyle: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                          child: SegmentedButton<ChartMode>(
+                            showSelectedIcon: false,
+                            style: SegmentedButton.styleFrom(
+                              visualDensity: VisualDensity.comfortable,
+                              selectedForegroundColor: Theme.of(
+                                context,
+                              ).focusColor,
+                              selectedBackgroundColor: Theme.of(
+                                context,
+                              ).primaryColor,
+                              side: BorderSide.none,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              backgroundColor: Colors.transparent,
+                              textStyle: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            segments: const [
+                              ButtonSegment(
+                                value: ChartMode.live,
+                                label: Text('Live'),
+                              ),
+                              ButtonSegment(
+                                value: ChartMode.hour,
+                                label: Text('1H'),
+                              ),
+                              ButtonSegment(
+                                value: ChartMode.day,
+                                label: Text('24H'),
+                              ),
+                            ],
+                            selected: {selectedMode},
+                            onSelectionChanged: (Set<ChartMode> newSelection) {
+                              setState(() => selectedMode = newSelection.first);
+                              context.read<MqttBloc>().add(
+                                ChangeModeEvent(
+                                  widget.roomName,
+                                  newSelection.first.name,
+                                ),
+                              );
+                              if (newSelection.first != ChartMode.live) {
+                                context.read<HistoricalDataBloc>().add(
+                                  FetchHistoricalData(
+                                    classroom: widget.roomName,
+                                    duration: newSelection.first.name,
+                                  ),
+                                );
+                              }
+                            },
                           ),
                         ),
-                        segments: const [
-                          ButtonSegment(
-                            value: ChartMode.live,
-                            label: Text('Live'),
-                          ),
-                          ButtonSegment(
-                            value: ChartMode.hour,
-                            label: Text('1H'),
-                          ),
-                          ButtonSegment(
-                            value: ChartMode.day,
-                            label: Text('24H'),
-                          ),
-                        ],
-                        selected: {selectedMode},
-                        onSelectionChanged: (Set<ChartMode> newSelection) {
-                          setState(() => selectedMode = newSelection.first);
-                          context.read<MqttBloc>().add(
-                            ChangeModeEvent(
-                              widget.roomName,
-                              newSelection.first.name,
-                            ),
-                          );
-                          if (newSelection.first != ChartMode.live) {
-                            context.read<HistoricalDataBloc>().add(
-                              FetchHistoricalData(
-                                classroom: widget.roomName,
-                                duration: newSelection.first.name,
-                              ),
-                            );
-                          }
-                        },
+                      ],
+                    ),
+                    SizedBox(width: 20),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Theme.of(context).focusColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (dialogContext) {
+                            return BlocConsumer<MqttBloc, MqttState>(
+                              listenWhen: (previous, current) =>
+                                  previous is CalibratingLuxValueState &&
+                                  current is ProjectorState,
+                              listener: (context, state) {
+                                Navigator.of(context).pop();
+                              },
+                              builder: (context, state) {
+                                final isLoading =
+                                    state is CalibratingLuxValueState;
+                                return AlertDialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  title: const Text("Calibrate Brightness"),
+                                  content: const Text(
+                                    "Are you sure want to calibrate the classroom brightness?",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: isLoading
+                                          ? null
+                                          : () => Navigator.of(context).pop(),
+                                      child: Text(
+                                        "Cancel",
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge
+                                              ?.color
+                                              ?.withOpacity(0.6),
+                                        ),
+                                      ),
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Theme.of(
+                                          context,
+                                        ).primaryColor,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      onPressed: isLoading
+                                          ? null
+                                          : () {
+                                              context.read<MqttBloc>().add(
+                                                CalibrateLuxValueEvent(),
+                                              );
+                                            },
+                                      child: isLoading
+                                          ? const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(Colors.white),
+                                              ),
+                                            )
+                                          : const Text("OK"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+                      child: Text("Calibrate classroom brightness"),
                     ),
                   ],
                 ),
@@ -251,6 +337,8 @@ class _DetailDashboardState extends State<DetailDashboard>
                 child: BlocBuilder<HistoricalDataBloc, HistoricalDataState>(
                   builder: (context, histState) {
                     return BlocBuilder<MqttBloc, MqttState>(
+                      buildWhen: (previous, current) =>
+                          current is ProjectorState,
                       builder: (context, state) {
                         final data = (state as ProjectorState).projectorStats;
                         final isLoading =

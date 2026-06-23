@@ -31,3 +31,5 @@ class SetHistoricalDataEvent extends MqttEvent {
     required this.timeData,
   });
 }
+
+class CalibrateLuxValueEvent extends MqttEvent {}

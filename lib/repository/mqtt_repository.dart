@@ -65,6 +65,16 @@ class MqttRepository {
       MqttClientPayloadBuilder().addString("refetch").payload!,
     );
 
-    print("Published message to topic thesis/refetch_schedule");
+    // print("Published message to topic thesis/refetch_schedule");
+  }
+
+  void triggerCalibrateLuxValue() {
+    client.publishMessage(
+      "thesis/calibrate_lux_value",
+      MqttQos.atLeastOnce,
+      MqttClientPayloadBuilder().addString("calibrate").payload!,
+    );
+
+    // print("Published message to topic thesis/calibrate_lux_value");
   }
 }
